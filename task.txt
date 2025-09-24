@@ -1,0 +1,284 @@
+# 🚀 Full-Stack Developer Take-Home Assignment
+
+## AI-Powered Code Review System
+
+---
+
+## 📋 Overview
+
+Build a web application that allows developers to submit code snippets for AI-powered review and feedback. The system should handle multiple concurrent reviews, store review history, and provide insights on code quality trends.
+
+**⏱️ Time Estimate:** 5 hours of focused development time
+
+**⏰ Deadline:** Complete within 7 days of receiving this assignment
+
+---
+
+## 🛠️ Required Technology Stack
+
+### Frontend
+
+- **React.js** with **TypeScript**
+- Functional components with hooks
+- Responsive design (mobile-friendly)
+- Code syntax highlighting library (e.g., react-syntax-highlighter)
+
+### Backend
+
+- **Python** with **FastAPI**
+- Async request handling
+- Pydantic models for validation
+- Auto-generated API documentation
+
+### Database
+
+- **MongoDB**
+- Efficient indexing for queries
+- Connection pooling
+
+### AI Integration
+
+- **OpenAI API** (or similar LLM service)
+- Custom prompt engineering for code review
+- Error handling and retry logic
+
+### Deployment
+
+- Deploy both frontend and backend to cloud platforms
+- Provide publicly accessible URLs
+
+---
+
+## ✅ Core Features Required
+
+### 1. Code Submission Interface (Frontend)
+
+- [ ]  Form to submit code snippets with programming language selection
+- [ ]  Real-time syntax highlighting for submitted code
+- [ ]  Display review status (pending, in-progress, completed, failed)
+- [ ]  Loading states and error handling for all API calls
+
+### 2. AI Code Review Service (Backend)
+
+- [ ]  Integrate with OpenAI API to analyze code snippets
+- [ ]  Generate structured feedback including:
+    - Code quality score (1-10)
+    - Identified issues and suggestions
+    - Security concerns
+    - Performance recommendations
+- [ ]  Handle concurrent review processing
+
+### 3. Review Management (Backend + Database)
+
+- [ ]  Store code submissions and reviews in MongoDB
+- [ ]  Track review status and timestamps
+- [ ]  Implement basic rate limiting (max 10 reviews per IP per hour)
+- [ ]  Background job processing for reviews
+
+### 4. Analytics Dashboard (Frontend)
+
+- [ ]  Display review history with filters (language, date range, score)
+- [ ]  Show aggregate statistics (average quality score, common issues)
+- [ ]  Export review data as CSV
+
+---
+
+## 🔗 API Endpoints (Minimum Required)
+
+```
+POST /api/reviews - Submit code for review
+GET /api/reviews/{id} - Get specific review
+GET /api/reviews - List reviews with pagination/filters
+GET /api/stats - Get aggregate statistics
+GET /api/health - Health check endpoint
+
+```
+
+---
+
+## 📊 Evaluation Criteria
+
+### Code Quality (30%)
+
+- Clean, readable, and well-structured code
+- Proper TypeScript usage and type safety
+- Error handling and edge cases
+- Code organization and separation of concerns
+
+### System Design (25%)
+
+- Proper async handling for concurrent reviews
+- Efficient database queries and indexing
+- API design following REST principles
+- Scalability considerations
+
+### Technical Implementation (25%)
+
+- Successful AI integration with meaningful prompts
+- Background job processing
+- Rate limiting implementation
+- Proper data validation
+
+### User Experience (10%)
+
+- Intuitive and responsive UI
+- Loading states and error messages
+- Clean and professional design
+
+### Deployment & Documentation (10%)
+
+- Successfully deployed application
+- Clear README with setup instructions
+- Environment configuration
+- Basic API documentation
+
+---
+
+## 🎯 Bonus Features (Optional)
+
+- [ ]  WebSocket integration for real-time review status updates
+- [ ]  Code diff visualization for before/after comparisons
+- [ ]  User authentication and personal review history
+- [ ]  Caching layer for repeated code submissions
+- [ ]  Docker containerization
+- [ ]  Unit/integration tests
+
+---
+
+## 🧪 Sample Test Cases
+
+Use these code snippets to test your system:
+
+### Python Example (has issues)
+
+```python
+def calculate_average(numbers):
+    return sum(numbers) / len(numbers)
+
+result = calculate_average([])
+
+```
+
+### JavaScript Example (needs improvements)
+
+```jsx
+function fetchUserData(userId) {
+    fetch('/api/users/' + userId)
+        .then(response => response.json())
+        .then(data => console.log(data));
+}
+
+```
+
+---
+
+## ⚙️ Environment Setup
+
+Create a `.env` file with:
+
+```
+OPENAI_API_KEY=your_openai_key
+MONGODB_URI=your_mongodb_connection_string
+FRONTEND_URL=http://localhost:3000
+BACKEND_URL=http://localhost:8000
+
+```
+
+---
+
+## 📝 Submission Instructions
+
+### 1. Code Repository
+
+- [ ]  Create a GitHub repository for your project
+- [ ]  **Add @KING-SID as a collaborator** to your repository
+- [ ]  Include a comprehensive README.md with:
+    - Setup and installation instructions
+    - Architecture overview
+    - API documentation
+    - Deployed URLs (frontend and backend)
+
+### 2. Deployment
+
+- [ ]  Deploy your frontend (Vercel, Netlify, etc.)
+- [ ]  Deploy your backend (Railway, Render, Heroku, etc.)
+- [ ]  Ensure both services are publicly accessible
+- [ ]  Test the deployed application thoroughly
+
+### 3. Demo Video
+
+- [ ]  Record a **5-10 minute Loom video** demonstrating:
+    - Live walkthrough of your deployed application
+    - Code submission and review process
+    - Analytics dashboard functionality
+    - Brief explanation of your technical approach
+- [ ]  **Email the Loom video link to: sid@quizard.ai**
+
+### 4. Documentation (500 words max)
+
+Include in your README or separate document:
+
+- Architecture decisions made and why
+- Challenges faced and how you solved them
+- Scalability considerations
+- What you would improve with more time
+- Trade-offs made due to time constraints
+
+---
+
+## ❗ Important Notes
+
+### Technical Requirements
+
+- Focus on core functionality first, then add polish
+- The AI doesn't need to be perfect - demonstrate integration skills
+- Consider how the system would handle 1000+ concurrent reviews
+- Use appropriate error handling - don't let the app crash
+- Consider API rate limits for both OpenAI and your own service
+
+### Code Quality Expectations
+
+- Write production-ready code with proper error handling
+- Use TypeScript effectively with proper type definitions
+- Implement proper async patterns (no blocking operations)
+- Follow REST API conventions
+- Structure your code for maintainability
+
+### What We're Looking For
+
+- **Problem-solving skills**: How you approach and break down the requirements
+- **Technical execution**: Clean, working code that handles edge cases
+- **System thinking**: Consideration for scale, performance, and reliability
+- **Communication**: Clear documentation and demo presentation
+
+---
+
+## ❓ Questions?
+
+If you have any clarifying questions about the requirements, feel free to reach out to **sid@quizard.ai**.
+
+**Good luck! We're excited to see what you build! 🎉**
+
+---
+
+## 📋 Submission Checklist
+
+Before submitting, ensure you have:
+
+- [ ]  ✅ Deployed and tested both frontend and backend
+- [ ]  ✅ Added @KING-SID as collaborator on GitHub repo
+- [ ]  ✅ Created comprehensive README with setup instructions
+- [ ]  ✅ Recorded and sent Loom demo video to sid@quizard.ai
+- [ ]  ✅ Tested the complete user flow on deployed application
+- [ ]  ✅ Implemented all core features listed above
+- [ ]  ✅ Added proper error handling and loading states
+- [ ]  ✅ Verified rate limiting is working
+- [ ]  ✅ Ensured AI integration is functional with meaningful responses
+
+**Final step:** Send an email to **sid@quizard.ai** with:
+
+- Subject: "Full-Stack Developer Assignment Submission - [Your Name]"
+- Loom video demo link
+- GitHub repository link
+- Deployed application URLs
+- Any additional notes or context
