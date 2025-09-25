@@ -1,0 +1,38 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+*.py[cod]
+__pycache__/
+.env
+.env.*
+venv/
+.venv/
+.poetry/
+.mypy_cache/
+.pytest_cache/
+coverage/
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+coverage-final.json
+pnpm-debug.log
+pnpm-lock.yaml
+
+# Python
+.poetry.lock
+poetry.lock
+
+# Editors
+.vscode/
+.idea/
+
+# Docker
+**/data/
+**/.cache/
+
+# Documentation builds
+docs/.docusaurus/
+docs/build/

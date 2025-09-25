@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  api:
+    container_name: deepreview-api
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+    env_file:
+      - backend/.env.example
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/deepreview
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+      - redis
+
+  worker:
+    container_name: deepreview-worker
+    build:
+      context: .
+      dockerfile: infra/docker/worker.Dockerfile
+    env_file:
+      - backend/.env.example
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/deepreview
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - mongo
+      - redis
+
+  frontend:
+    container_name: deepreview-frontend
+    build:
+      context: frontend
+      dockerfile: ../infra/docker/frontend.Dockerfile
+    env_file:
+      - frontend/.env.example
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+  redis:
+    image: redis:7-alpine
+    container_name: deepreview-redis
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: mongo:7
+    container_name: deepreview-mongo
+    environment:
+      MONGO_INITDB_DATABASE: deepreview
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

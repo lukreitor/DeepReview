@@ -1,0 +1,55 @@
+name: deploy-backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - backend/**
+      - infra/docker/backend.Dockerfile
+      - infra/docker/worker.Dockerfile
+      - docker-compose.yml
+      - .github/workflows/deploy-backend.yml
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    name: Trigger Render backend & worker deploys
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate secrets
+        run: |
+          test -n "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}" || { echo "Missing RENDER_BACKEND_DEPLOY_HOOK"; exit 1; }
+          test -n "${{ secrets.RENDER_WORKER_DEPLOY_HOOK }}" || { echo "Missing RENDER_WORKER_DEPLOY_HOOK"; exit 1; }
+
+      - name: Trigger API deploy
+        run: |
+          curl -fsSL -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
+
+      - name: Trigger Worker deploy
+        run: |
+          curl -fsSL -X POST "${{ secrets.RENDER_WORKER_DEPLOY_HOOK }}"
+
+      - name: Notify deployment
+        uses: slackapi/slack-github-action@v1.27.0
+        if: ${{ success() && secrets.SLACK_WEBHOOK_URL != '' }}
+        with:
+          payload: |
+            {
+              "text": ":rocket: DeepReview backend deployment triggered",
+              "attachments": [
+                {
+                  "color": "#36a64f",
+                  "fields": [
+                    {"title": "Environment", "value": "production", "short": true},
+                    {"title": "Branch", "value": "${{ github.ref_name }}", "short": true}
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
