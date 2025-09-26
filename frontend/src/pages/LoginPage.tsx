@@ -44,13 +44,16 @@ export const LoginPage = () => {
     },
   });
 
+  const emailError = errors.email?.message;
+  const passwordError = errors.password?.message;
+
   useEffect(() => {
     if (token) {
       navigate('/dashboard', { replace: true });
     }
   }, [token, navigate]);
 
-  const onSubmit = (values: FormValues) => {
+  const submitHandler = handleSubmit((values: FormValues) => {
     mutation.mutate(values, {
       onSuccess: (data: TokenResponse) => {
         setToken(data.access_token);
@@ -65,7 +68,7 @@ export const LoginPage = () => {
         });
       },
     });
-  };
+  });
 
   return (
     <Box maxW="md" mx="auto" py={10}>
@@ -76,22 +79,22 @@ export const LoginPage = () => {
           </Text>
           <Text color="gray.500">Submit code and track AI review insights.</Text>
         </Box>
-        <Stack as="form" spacing={4} onSubmit={handleSubmit(onSubmit)}>
-          <FormControl isInvalid={Boolean(errors.email)}>
+        <Stack as="form" spacing={4} onSubmit={(event) => void submitHandler(event)}>
+          <FormControl isInvalid={Boolean(emailError)}>
             <FormLabel>Email</FormLabel>
             <Input type="email" {...register('email')} />
-            {errors.email && (
+            {emailError && (
               <Text fontSize="sm" color="red.500" mt={1}>
-                {errors.email.message}
+                {emailError}
               </Text>
             )}
           </FormControl>
-          <FormControl isInvalid={Boolean(errors.password)}>
+          <FormControl isInvalid={Boolean(passwordError)}>
             <FormLabel>Password</FormLabel>
             <Input type="password" {...register('password')} />
-            {errors.password && (
+            {passwordError && (
               <Text fontSize="sm" color="red.500" mt={1}>
-                {errors.password.message}
+                {passwordError}
               </Text>
             )}
           </FormControl>

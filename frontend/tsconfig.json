@@ -12,7 +12,8 @@
       "@services/*": ["services/*"],
       "@store/*": ["store/*"]
     },
-    "types": ["vitest/globals", "vitest/importMeta", "vite/client"]
+    "types": ["vitest/globals", "vitest/importMeta", "vite/client"],
+    "skipLibCheck": true
   },
   "include": ["src", "tests", "vite.config.ts"],
   "exclude": ["node_modules", "dist"]

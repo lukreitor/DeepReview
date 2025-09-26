@@ -25,6 +25,7 @@ class Review(Document):
     security_concerns: List[str] = Field(default_factory=list)
     performance_recommendations: List[str] = Field(default_factory=list)
     additional_suggestions: List[str] = Field(default_factory=list)
+    improved_code: Optional[str] = None
     raw_response: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

@@ -24,8 +24,13 @@ export const useRegister = () =>
       const { data } = await apiClient.post<TokenResponse>('/auth/register', payload);
       return data;
     },
-    onSuccess: (data: TokenResponse) => {
-      useAuthStore.getState().setToken(data.access_token);
+    onSuccess: async (data: TokenResponse) => {
+      const authStore = useAuthStore.getState();
+      authStore.setToken(data.access_token);
+      const profile = await apiClient
+        .get<UserProfile>('/auth/me')
+        .then((response) => response.data);
+      authStore.setProfile(profile);
     },
   });
 
@@ -41,8 +46,13 @@ export const useLogin = () =>
       });
       return data;
     },
-    onSuccess: (data: TokenResponse) => {
-      useAuthStore.getState().setToken(data.access_token);
+    onSuccess: async (data: TokenResponse) => {
+      const authStore = useAuthStore.getState();
+      authStore.setToken(data.access_token);
+      const profile = await apiClient
+        .get<UserProfile>('/auth/me')
+        .then((response) => response.data);
+      authStore.setProfile(profile);
     },
   });
 
@@ -51,6 +61,7 @@ export const useCurrentUser = () =>
     queryKey: ['auth', 'me'],
     queryFn: async () => {
       const { data } = await apiClient.get<UserProfile>('/auth/me');
+      useAuthStore.getState().setProfile(data);
       return data;
     },
     enabled: Boolean(useAuthStore.getState().token),

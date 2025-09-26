@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from statistics import mean
+from typing import Any, Dict, List
 
 from beanie.odm.operators.find import In
 
-from app.models import Review, Submission
+from app.models import Review, Submission, SubmissionStatus
 
 
 class AnalyticsService:
@@ -14,13 +15,17 @@ class AnalyticsService:
         return await self._compute_fresh(user_id)
 
     async def _compute_fresh(self, user_id: str) -> Dict[str, Any]:
-        reviews = await Review.find(Review.user_id == user_id).to_list()
+        reviews = await Review.find(Review.user_id == user_id).sort(-Review.created_at).to_list()
         if not reviews:
             return {
                 "avgScore": None,
                 "throughput": {"daily": []},
                 "topLanguages": [],
                 "commonIssues": [],
+                "pending": 0,
+                "completed": 0,
+                "failed": 0,
+                "turnaroundHours": None,
                 "lastUpdated": datetime.utcnow(),
             }
 
@@ -46,6 +51,25 @@ class AnalyticsService:
             for issue in review.issues:
                 issues[issue.category] = issues.get(issue.category, 0) + 1
 
+        pending_count = await Submission.find(
+            (Submission.user_id == user_id)
+            & In(Submission.status, [SubmissionStatus.PENDING, SubmissionStatus.PROCESSING])
+        ).count()
+        completed_count = await Submission.find(
+            (Submission.user_id == user_id)
+            & In(Submission.status, [SubmissionStatus.COMPLETED, SubmissionStatus.CACHED])
+        ).count()
+        failed_count = await Submission.find(
+            (Submission.user_id == user_id) & (Submission.status == SubmissionStatus.FAILED)
+        ).count()
+
+        turnaround_samples: List[float] = []
+        for review in reviews:
+            submission = await Submission.get(review.submission_id)
+            if submission:
+                delta = review.created_at - submission.created_at
+                turnaround_samples.append(delta.total_seconds() / 3600)
+
         payload = {
             "avgScore": round(avg_score, 2),
             "throughput": {"daily": [{"date": k, "count": v} for k, v in sorted(throughput.items())]},
@@ -54,6 +78,10 @@ class AnalyticsService:
                 {"category": category, "count": count}
                 for category, count in sorted(issues.items(), key=lambda item: item[1], reverse=True)
             ],
+            "pending": pending_count,
+            "completed": completed_count,
+            "failed": failed_count,
+            "turnaroundHours": round(mean(turnaround_samples), 2) if turnaround_samples else None,
             "lastUpdated": datetime.utcnow(),
             "cached": False,
         }

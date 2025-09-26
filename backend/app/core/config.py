@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     deepseek_api_key: str = Field(..., alias="DEEPSEEK_API_KEY")
     deepseek_base_url: AnyHttpUrl = Field("https://api.deepseek.com/v1", alias="DEEPSEEK_BASE_URL")
+    deepseek_model: str = Field("deepseek-chat", alias="DEEPSEEK_MODEL")
     whisper_api_key: str = Field(..., alias="WHISPER_API_KEY")
     whisper_base_url: AnyHttpUrl = Field("https://api.lemonfox.ai", alias="WHISPER_BASE_URL")
 
@@ -33,6 +34,9 @@ class Settings(BaseSettings):
     )
 
     rate_limit: str = Field("10/hour", alias="RATE_LIMIT")
+    review_cache_ttl_seconds: int = Field(86400, alias="REVIEW_CACHE_TTL_SECONDS")
+    review_cache_prefix: str = Field("deepreview:review-cache", alias="REVIEW_CACHE_PREFIX")
+    websocket_channel_prefix: str = Field("deepreview:ws", alias="WEBSOCKET_CHANNEL_PREFIX")
 
     sentry_dsn: str | None = Field(None, alias="SENTRY_DSN")
     growthbook_client_key: str | None = Field(None, alias="GROWTHBOOK_CLIENT_KEY")

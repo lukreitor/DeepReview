@@ -56,13 +56,17 @@ export const RegisterPage = () => {
     },
   });
 
+  const emailError = errors.email?.message;
+  const passwordError = errors.password?.message;
+  const confirmPasswordError = errors.confirmPassword?.message;
+
   useEffect(() => {
     if (token) {
       navigate('/dashboard', { replace: true });
     }
   }, [token, navigate]);
 
-  const onSubmit = (values: FormValues) => {
+  const submitHandler = handleSubmit((values: FormValues) => {
     mutation.mutate(
       { email: values.email, password: values.password, full_name: values.full_name },
       {
@@ -80,7 +84,7 @@ export const RegisterPage = () => {
         },
       }
     );
-  };
+  });
 
   return (
     <Box maxW="md" mx="auto" py={10}>
@@ -91,35 +95,35 @@ export const RegisterPage = () => {
           </Text>
           <Text color="gray.500">Create an account to unlock AI-powered reviews.</Text>
         </Box>
-        <Stack as="form" spacing={4} onSubmit={handleSubmit(onSubmit)}>
+        <Stack as="form" spacing={4} onSubmit={(event) => void submitHandler(event)}>
           <FormControl>
             <FormLabel>Full name</FormLabel>
             <Input type="text" {...register('full_name')} />
           </FormControl>
-          <FormControl isInvalid={Boolean(errors.email)}>
+          <FormControl isInvalid={Boolean(emailError)}>
             <FormLabel>Email</FormLabel>
             <Input type="email" {...register('email')} />
-            {errors.email && (
+            {emailError && (
               <Text fontSize="sm" color="red.500" mt={1}>
-                {errors.email.message}
+                {emailError}
               </Text>
             )}
           </FormControl>
-          <FormControl isInvalid={Boolean(errors.password)}>
+          <FormControl isInvalid={Boolean(passwordError)}>
             <FormLabel>Password</FormLabel>
             <Input type="password" {...register('password')} />
-            {errors.password && (
+            {passwordError && (
               <Text fontSize="sm" color="red.500" mt={1}>
-                {errors.password.message}
+                {passwordError}
               </Text>
             )}
           </FormControl>
-          <FormControl isInvalid={Boolean(errors.confirmPassword)}>
+          <FormControl isInvalid={Boolean(confirmPasswordError)}>
             <FormLabel>Confirm password</FormLabel>
             <Input type="password" {...register('confirmPassword')} />
-            {errors.confirmPassword && (
+            {confirmPasswordError && (
               <Text fontSize="sm" color="red.500" mt={1}>
-                {errors.confirmPassword.message}
+                {confirmPasswordError}
               </Text>
             )}
           </FormControl>

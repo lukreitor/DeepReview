@@ -1,6 +1,6 @@
 from .analytics import AnalyticsSnapshot
 from .review import Review
-from .submission import Submission, SubmissionCreate, SubmissionSource
+from .submission import Submission, SubmissionCreate, SubmissionSource, SubmissionStatus
 from .user import User
 
 __all__ = [
@@ -9,5 +9,6 @@ __all__ = [
     "Submission",
     "SubmissionCreate",
     "SubmissionSource",
+    "SubmissionStatus",
     "User",
 ]
