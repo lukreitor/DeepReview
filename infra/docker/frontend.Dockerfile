@@ -9,7 +9,8 @@ RUN corepack enable && corepack prepare pnpm@9.1.0 --activate
 COPY package.json pnpm-lock.yaml* tsconfig.json vite.config.ts ./
 COPY tsconfig.node.json vitest.config.ts ./
 
-RUN pnpm install --frozen-lockfile=false
+ENV NODE_ENV=development
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 

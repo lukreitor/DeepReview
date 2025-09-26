@@ -1,0 +1,7 @@
+node_modules
+.pnpm-store
+.pnp.cjs
+.pnp.data.json
+dist
+.DS_Store
+.git
