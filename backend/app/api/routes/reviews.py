@@ -37,7 +37,8 @@ class SubmissionQueuedResponse(BaseModel):
         }
 
 
-@router.post("/", status_code=status.HTTP_202_ACCEPTED, response_model=SubmissionQueuedResponse)
+@router.post("", status_code=status.HTTP_202_ACCEPTED, response_model=SubmissionQueuedResponse)
+@router.post("/", status_code=status.HTTP_202_ACCEPTED, response_model=SubmissionQueuedResponse, include_in_schema=False)
 async def create_review(
     submission: SubmissionCreate,
     current_user: User = Depends(get_current_active_user),
@@ -56,7 +57,8 @@ async def create_review(
     )
 
 
-@router.get("/")
+@router.get("")
+@router.get("/", include_in_schema=False)
 async def list_reviews(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -225,3 +227,39 @@ async def get_review(
             "review": review,
         }
     )
+
+
+# Allow optional trailing slashes without relying on redirects to avoid CORS preflight failures.
+router.add_api_route(
+    "/",
+    create_review,
+    methods=["POST"],
+    response_model=SubmissionQueuedResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    include_in_schema=False,
+)
+router.add_api_route(
+    "/",
+    list_reviews,
+    methods=["GET"],
+    include_in_schema=False,
+)
+router.add_api_route(
+    "/export/",
+    export_reviews,
+    methods=["GET"],
+    response_class=StreamingResponse,
+    include_in_schema=False,
+)
+router.add_api_route(
+    "/analytics/summary/",
+    reviews_summary,
+    methods=["GET"],
+    include_in_schema=False,
+)
+router.add_api_route(
+    "/{submission_id}/",
+    get_review,
+    methods=["GET"],
+    include_in_schema=False,
+)

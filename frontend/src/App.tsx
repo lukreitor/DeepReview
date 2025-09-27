@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { DashboardPage } from './pages/DashboardPage';
 import { SubmitPage } from './pages/SubmitPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 export default function App() {
   return (
@@ -18,22 +20,36 @@ export default function App() {
             boxShadow="2xl"
           >
             <Stack spacing={4} maxW="3xl">
-              <Text fontSize={{ base: 'md', md: 'lg' }} textTransform="uppercase" letterSpacing="wide" color="whiteAlpha.800">
+              <Text
+                fontSize={{ base: 'md', md: 'lg' }}
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="whiteAlpha.800"
+              >
                 DeepReview platform
               </Text>
               <Text fontSize={{ base: '3xl', md: '4xl' }} fontWeight="extrabold">
                 Give your team calm, high-signal AI feedback on every pull request.
               </Text>
               <Text fontSize={{ base: 'md', md: 'lg' }} color="whiteAlpha.900">
-                Submit code or voice notes, watch real-time review progress, and explore analytics that keep quality moving forward.
+                Submit code or voice notes, watch real-time review progress, and explore analytics
+                that keep quality moving forward.
               </Text>
             </Stack>
           </Box>
 
-          <Box bg="white" borderRadius="3xl" boxShadow="xl" px={{ base: 4, md: 10 }} py={{ base: 6, md: 10 }}>
+          <Box
+            bg="white"
+            borderRadius="3xl"
+            boxShadow="xl"
+            px={{ base: 4, md: 10 }}
+            py={{ base: 6, md: 10 }}
+          >
             <Routes>
               <Route path="/submit" element={<SubmitPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
               <Route path="/" element={<Navigate to="/submit" />} />
             </Routes>
           </Box>

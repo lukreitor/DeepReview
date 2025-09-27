@@ -19,3 +19,11 @@ async def get_health() -> dict[str, object]:
         "components": status,
         "timestamp": datetime.utcnow().isoformat(),
     }
+
+
+router.add_api_route(
+    "",
+    get_health,
+    methods=["GET"],
+    include_in_schema=False,
+)

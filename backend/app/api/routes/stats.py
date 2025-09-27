@@ -14,3 +14,11 @@ router = APIRouter()
 async def get_stats(current_user: User = Depends(get_current_active_user)) -> dict[str, object]:
     service = AnalyticsService()
     return await service.build_dashboard_stats(str(current_user.id))
+
+
+router.add_api_route(
+    "",
+    get_stats,
+    methods=["GET"],
+    include_in_schema=False,
+)

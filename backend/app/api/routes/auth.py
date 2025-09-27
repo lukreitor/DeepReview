@@ -66,3 +66,28 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> TokenRespon
 @router.get("/me", response_model=UserRead)
 async def read_me(current_user: User = Depends(get_current_active_user)) -> UserRead:
     return UserRead.model_validate(current_user)
+
+
+# Allow optional trailing slashes to avoid cross-origin redirect issues.
+router.add_api_route(
+    "/register/",
+    register_user,
+    methods=["POST"],
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
+)
+router.add_api_route(
+    "/token/",
+    login,
+    methods=["POST"],
+    response_model=TokenResponse,
+    include_in_schema=False,
+)
+router.add_api_route(
+    "/me/",
+    read_me,
+    methods=["GET"],
+    response_model=UserRead,
+    include_in_schema=False,
+)

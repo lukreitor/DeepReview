@@ -5,6 +5,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -26,6 +27,30 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+    )
+
+    primary_origin = str(settings.frontend_url).rstrip("/")
+    derived_origins: set[str] = {primary_origin}
+
+    # When developing locally it's common to access the UI via different localhost aliases or ports.
+    if settings.frontend_url.host in {"localhost", "127.0.0.1"}:
+        host_variants = {"localhost", "127.0.0.1"}
+        common_ports = {3000, 4173, 5173, settings.frontend_url.port or 80}
+        for host in host_variants:
+            derived_origins.add(f"http://{host}")
+            derived_origins.add(f"https://{host}")
+            for port in common_ports:
+                if port in {80, 443, None}:
+                    continue
+                derived_origins.add(f"http://{host}:{port}")
+                derived_origins.add(f"https://{host}:{port}")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=sorted(derived_origins),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     app.state.limiter = limiter

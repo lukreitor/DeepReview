@@ -1,7 +1,12 @@
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
   Badge,
   Box,
   Button,
+  ButtonGroup,
   Center,
   FormControl,
   FormHelperText,
@@ -25,11 +30,13 @@ import { Suspense, lazy, useRef, useState, type ChangeEvent } from 'react';
 import { Controller, useForm, type ControllerRenderProps } from 'react-hook-form';
 import { MdMic } from 'react-icons/md';
 import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
 
 const MonacoEditor = lazy(() => import('@monaco-editor/react'));
 
 import { useCreateReview } from '@features/reviews/api';
 import { ReviewQueue } from '@components/ReviewQueue';
+import { useAuthStore, type AuthState } from '@store/authStore';
 
 const codeSchema = z.object({
   language: z.string().min(1, 'Language is required'),
@@ -40,6 +47,9 @@ type CodeFormValues = z.infer<typeof codeSchema>;
 
 export const SubmitPage = () => {
   const toast = useToast();
+  const navigate = useNavigate();
+  const token = useAuthStore((state: AuthState) => state.token);
+  const isAuthenticated = Boolean(token);
   const [mode, setMode] = useState<'code' | 'audio'>('code');
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -80,6 +90,10 @@ export const SubmitPage = () => {
   };
 
   const submitCode = (values: CodeFormValues) => {
+    if (!isAuthenticated) {
+      promptLogin();
+      return;
+    }
     mutation.mutate(
       {
         language: values.language,
@@ -108,6 +122,10 @@ export const SubmitPage = () => {
   };
 
   const submitAudio = () => {
+    if (!isAuthenticated) {
+      promptLogin();
+      return;
+    }
     if (!audioBase64) {
       toast({
         title: 'Select an audio file first',
@@ -150,14 +168,44 @@ export const SubmitPage = () => {
     submitCode(values);
   });
 
+  const promptLogin = () => {
+    toast({
+      title: 'Sign in required',
+      description: 'Log in to submit items for review and receive updates.',
+      status: 'warning',
+    });
+    navigate('/login');
+  };
+
   return (
     <Stack spacing={10}>
+      {!isAuthenticated && (
+        <Alert status="info" variant="subtle" borderRadius="xl" alignItems="flex-start">
+          <AlertIcon boxSize="24px" mt={1} />
+          <Stack spacing={2}>
+            <AlertTitle>Log in to submit reviews</AlertTitle>
+            <AlertDescription>
+              Access your historical reviews, receive queue updates, and keep analytics tailored to
+              your team.
+            </AlertDescription>
+            <ButtonGroup size="sm">
+              <Button colorScheme="brand" onClick={() => navigate('/login')}>
+                Go to login
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/register')}>
+                Create an account
+              </Button>
+            </ButtonGroup>
+          </Stack>
+        </Alert>
+      )}
       <Stack spacing={2}>
         <Text fontSize="lg" fontWeight="semibold" color="brand.600">
           Submit for review
         </Text>
         <Text color="gray.600">
-          Choose between code or audio instructions—the AI will normalize, review, and keep your team in sync.
+          Choose between code or audio instructions—the AI will normalize, review, and keep your
+          team in sync.
         </Text>
       </Stack>
 
@@ -179,60 +227,64 @@ export const SubmitPage = () => {
             <TabPanel px={0}>
               <Box bg="gray.50" borderRadius="2xl" p={{ base: 4, md: 6 }} boxShadow="sm">
                 <Stack as="form" spacing={6} onSubmit={(event) => void handleCodeSubmit(event)}>
-                <FormControl>
-                  <FormLabel>Language</FormLabel>
-                  <Select {...register('language')}>
-                    <option value="python">Python</option>
-                    <option value="javascript">JavaScript</option>
-                    <option value="typescript">TypeScript</option>
-                    <option value="go">Go</option>
-                    <option value="java">Java</option>
-                  </Select>
-                </FormControl>
+                  <FormControl>
+                    <FormLabel>Language</FormLabel>
+                    <Select {...register('language')}>
+                      <option value="python">Python</option>
+                      <option value="javascript">JavaScript</option>
+                      <option value="typescript">TypeScript</option>
+                      <option value="go">Go</option>
+                      <option value="java">Java</option>
+                    </Select>
+                  </FormControl>
 
-                <FormControl isInvalid={Boolean(contentError)}>
-                  <FormLabel>Snippet</FormLabel>
-                  <Box borderWidth="1px" borderRadius="lg" overflow="hidden" boxShadow="sm">
-                    <Controller
-                      name="content"
-                      control={control}
-                      render={({
-                        field,
-                      }: {
-                        field: ControllerRenderProps<CodeFormValues, 'content'>;
-                      }) => (
-                        <Suspense
-                          fallback={
-                            <Center height="400px" bg="gray.100">
-                              <Spinner color="brand.500" thickness="4px" />
-                            </Center>
-                          }
-                        >
-                          <MonacoEditor
-                            height="400px"
-                            language={watchedLanguage || 'python'}
-                            theme="vs-light"
-                            value={field.value}
-                            onChange={(value: string | undefined) => field.onChange(value ?? '')}
-                            options={{
-                              minimap: { enabled: false },
-                              fontSize: 14,
-                              wordWrap: 'on',
-                            }}
-                          />
-                        </Suspense>
-                      )}
-                    />
-                  </Box>
-                  {contentError && (
-                    <Badge colorScheme="red" mt={2} alignSelf="flex-start">
-                      {contentError}
-                    </Badge>
-                  )}
-                </FormControl>
+                  <FormControl isInvalid={Boolean(contentError)}>
+                    <FormLabel>Snippet</FormLabel>
+                    <Box borderWidth="1px" borderRadius="lg" overflow="hidden" boxShadow="sm">
+                      <Controller
+                        name="content"
+                        control={control}
+                        render={({
+                          field,
+                        }: {
+                          field: ControllerRenderProps<CodeFormValues, 'content'>;
+                        }) => (
+                          <Suspense
+                            fallback={
+                              <Center height="400px" bg="gray.100">
+                                <Spinner color="brand.500" thickness="4px" />
+                              </Center>
+                            }
+                          >
+                            <MonacoEditor
+                              height="400px"
+                              language={watchedLanguage || 'python'}
+                              theme="vs-light"
+                              value={field.value}
+                              onChange={(value: string | undefined) => field.onChange(value ?? '')}
+                              options={{
+                                minimap: { enabled: false },
+                                fontSize: 14,
+                                wordWrap: 'on',
+                              }}
+                            />
+                          </Suspense>
+                        )}
+                      />
+                    </Box>
+                    {contentError && (
+                      <Badge colorScheme="red" mt={2} alignSelf="flex-start">
+                        {contentError}
+                      </Badge>
+                    )}
+                  </FormControl>
 
                   <HStack justify="flex-end">
-                    <Button type="submit" isLoading={mutation.isPending}>
+                    <Button
+                      type="submit"
+                      isLoading={mutation.isPending}
+                      isDisabled={!isAuthenticated}
+                    >
                       Submit for review
                     </Button>
                   </HStack>
@@ -242,44 +294,50 @@ export const SubmitPage = () => {
             <TabPanel px={0}>
               <Box bg="gray.50" borderRadius="2xl" p={{ base: 4, md: 6 }} boxShadow="sm">
                 <Stack spacing={5}>
-                <FormControl>
-                  <FormLabel>Expected language</FormLabel>
-                  <Select {...register('language')}>
-                    <option value="python">Python</option>
-                    <option value="javascript">JavaScript</option>
-                    <option value="typescript">TypeScript</option>
-                    <option value="go">Go</option>
-                    <option value="java">Java</option>
-                  </Select>
-                  <FormHelperText>
-                    We use this field to prime the AI prompt, but transcription will still try to
-                    identify the correct language automatically.
-                  </FormHelperText>
-                </FormControl>
+                  <FormControl>
+                    <FormLabel>Expected language</FormLabel>
+                    <Select {...register('language')}>
+                      <option value="python">Python</option>
+                      <option value="javascript">JavaScript</option>
+                      <option value="typescript">TypeScript</option>
+                      <option value="go">Go</option>
+                      <option value="java">Java</option>
+                    </Select>
+                    <FormHelperText>
+                      We use this field to prime the AI prompt, but transcription will still try to
+                      identify the correct language automatically.
+                    </FormHelperText>
+                  </FormControl>
 
-                <FormControl>
-                  <FormLabel>Audio file</FormLabel>
-                  <Input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="audio/*"
-                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                      handleAudioSelection(event.target.files)
-                    }
-                  />
-                  <FormHelperText>
-                    The audio should describe the code you want to generate. Files up to 25MB are
-                    supported.
-                  </FormHelperText>
-                  {audioBase64 && (
-                    <Text fontSize="sm" color="green.500" mt={1}>
-                      File prepared ({Math.round((audioBase64.length * 3) / 4 / 1024)} KB)
-                    </Text>
-                  )}
-                </FormControl>
+                  <FormControl>
+                    <FormLabel>Audio file</FormLabel>
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="audio/*"
+                      onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                        handleAudioSelection(event.target.files)
+                      }
+                    />
+                    <FormHelperText>
+                      The audio should describe the code you want to generate. Files up to 25MB are
+                      supported.
+                    </FormHelperText>
+                    {audioBase64 && (
+                      <Text fontSize="sm" color="green.500" mt={1}>
+                        File prepared ({Math.round((audioBase64.length * 3) / 4 / 1024)} KB)
+                      </Text>
+                    )}
+                  </FormControl>
 
                   <HStack justify="flex-end">
-                    <Button variant="solid" colorScheme="accent" onClick={submitAudio} isLoading={mutation.isPending}>
+                    <Button
+                      variant="solid"
+                      colorScheme="accent"
+                      onClick={submitAudio}
+                      isLoading={mutation.isPending}
+                      isDisabled={!isAuthenticated}
+                    >
                       Transcribe and review
                     </Button>
                   </HStack>

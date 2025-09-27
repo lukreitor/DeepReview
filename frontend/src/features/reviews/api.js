@@ -9,7 +9,7 @@ export const useCreateReview = () => {
     const upsertJob = useReviewStore((state) => state.upsert);
     return useMutation({
         mutationFn: async (payload) => {
-            const { data } = await apiClient.post('/reviews', payload);
+            const { data } = await apiClient.post('/reviews/', payload);
             return data;
         },
         onSuccess: (data) => {
@@ -22,7 +22,7 @@ export const useCreateReview = () => {
 export const useListReviews = () => useQuery({
     queryKey: ['reviews'],
     queryFn: async () => {
-        const { data } = await apiClient.get('/reviews');
+        const { data } = await apiClient.get('/reviews/');
         return data;
     },
     refetchInterval: 120000,

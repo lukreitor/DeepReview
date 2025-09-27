@@ -26,7 +26,15 @@ export const ReviewQueue = () => {
   }
 
   return (
-    <Box bg="gray.50" borderRadius="2xl" px={{ base: 4, md: 6 }} py={{ base: 5, md: 6 }} borderWidth="1px" borderColor="gray.100" boxShadow="md">
+    <Box
+      bg="gray.50"
+      borderRadius="2xl"
+      px={{ base: 4, md: 6 }}
+      py={{ base: 5, md: 6 }}
+      borderWidth="1px"
+      borderColor="gray.100"
+      boxShadow="md"
+    >
       <Stack spacing={3}>
         <Text fontWeight="semibold" color="gray.700">
           Live queue
