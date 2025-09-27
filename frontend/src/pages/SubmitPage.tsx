@@ -151,23 +151,34 @@ export const SubmitPage = () => {
   });
 
   return (
-    <Stack spacing={8}>
+    <Stack spacing={10}>
+      <Stack spacing={2}>
+        <Text fontSize="lg" fontWeight="semibold" color="brand.600">
+          Submit for review
+        </Text>
+        <Text color="gray.600">
+          Choose between code or audio instructions—the AI will normalize, review, and keep your team in sync.
+        </Text>
+      </Stack>
+
       <Box>
         <Tabs
           index={mode === 'code' ? 0 : 1}
           onChange={(index: number) => setMode(index === 0 ? 'code' : 'audio')}
           isFitted
           variant="enclosed"
+          colorScheme="brand"
         >
-          <TabList>
-            <Tab>Code editor</Tab>
-            <Tab display="flex" gap={2} alignItems="center">
+          <TabList bg="gray.50" borderRadius="xl" p={2}>
+            <Tab borderRadius="lg">Code editor</Tab>
+            <Tab display="flex" gap={2} alignItems="center" borderRadius="lg">
               <Icon as={MdMic} /> Audio (Whisper)
             </Tab>
           </TabList>
-          <TabPanels>
+          <TabPanels mt={4}>
             <TabPanel px={0}>
-              <Stack as="form" spacing={5} onSubmit={(event) => void handleCodeSubmit(event)}>
+              <Box bg="gray.50" borderRadius="2xl" p={{ base: 4, md: 6 }} boxShadow="sm">
+                <Stack as="form" spacing={6} onSubmit={(event) => void handleCodeSubmit(event)}>
                 <FormControl>
                   <FormLabel>Language</FormLabel>
                   <Select {...register('language')}>
@@ -181,7 +192,7 @@ export const SubmitPage = () => {
 
                 <FormControl isInvalid={Boolean(contentError)}>
                   <FormLabel>Snippet</FormLabel>
-                  <Box borderWidth="1px" borderRadius="md" overflow="hidden">
+                  <Box borderWidth="1px" borderRadius="lg" overflow="hidden" boxShadow="sm">
                     <Controller
                       name="content"
                       control={control}
@@ -192,15 +203,15 @@ export const SubmitPage = () => {
                       }) => (
                         <Suspense
                           fallback={
-                            <Center height="400px" bg="gray.900">
-                              <Spinner color="blue.400" thickness="4px" />
+                            <Center height="400px" bg="gray.100">
+                              <Spinner color="brand.500" thickness="4px" />
                             </Center>
                           }
                         >
                           <MonacoEditor
                             height="400px"
                             language={watchedLanguage || 'python'}
-                            theme="vs-dark"
+                            theme="vs-light"
                             value={field.value}
                             onChange={(value: string | undefined) => field.onChange(value ?? '')}
                             options={{
@@ -220,15 +231,17 @@ export const SubmitPage = () => {
                   )}
                 </FormControl>
 
-                <HStack justify="flex-end">
-                  <Button colorScheme="blue" type="submit" isLoading={mutation.isPending}>
-                    Submit for review
-                  </Button>
-                </HStack>
-              </Stack>
+                  <HStack justify="flex-end">
+                    <Button type="submit" isLoading={mutation.isPending}>
+                      Submit for review
+                    </Button>
+                  </HStack>
+                </Stack>
+              </Box>
             </TabPanel>
             <TabPanel px={0}>
-              <Stack spacing={5}>
+              <Box bg="gray.50" borderRadius="2xl" p={{ base: 4, md: 6 }} boxShadow="sm">
+                <Stack spacing={5}>
                 <FormControl>
                   <FormLabel>Expected language</FormLabel>
                   <Select {...register('language')}>
@@ -265,12 +278,13 @@ export const SubmitPage = () => {
                   )}
                 </FormControl>
 
-                <HStack justify="flex-end">
-                  <Button colorScheme="purple" onClick={submitAudio} isLoading={mutation.isPending}>
-                    Transcribe and review
-                  </Button>
-                </HStack>
-              </Stack>
+                  <HStack justify="flex-end">
+                    <Button variant="solid" colorScheme="accent" onClick={submitAudio} isLoading={mutation.isPending}>
+                      Transcribe and review
+                    </Button>
+                  </HStack>
+                </Stack>
+              </Box>
             </TabPanel>
           </TabPanels>
         </Tabs>

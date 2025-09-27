@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from statistics import mean
 from typing import Any, Dict, List
 
-from beanie.odm.operators.find import In
+from beanie.operators import In
 
 from app.models import Review, Submission, SubmissionStatus
 

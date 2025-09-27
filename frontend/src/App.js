@@ -1,0 +1,8 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Box, Container, Stack, Text } from '@chakra-ui/react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { DashboardPage } from './pages/DashboardPage';
+import { SubmitPage } from './pages/SubmitPage';
+export default function App() {
+    return (_jsx(Box, { bgGradient: "linear(to-b, brand.50, white)", minH: "100vh", py: { base: 8, md: 12 }, children: _jsx(Container, { maxW: "6xl", children: _jsxs(Stack, { spacing: 10, children: [_jsx(Box, { bgGradient: "linear(to-r, brand.500, brand.600)", color: "white", borderRadius: "3xl", px: { base: 6, md: 12 }, py: { base: 8, md: 12 }, boxShadow: "2xl", children: _jsxs(Stack, { spacing: 4, maxW: "3xl", children: [_jsx(Text, { fontSize: { base: 'md', md: 'lg' }, textTransform: "uppercase", letterSpacing: "wide", color: "whiteAlpha.800", children: "DeepReview platform" }), _jsx(Text, { fontSize: { base: '3xl', md: '4xl' }, fontWeight: "extrabold", children: "Give your team calm, high-signal AI feedback on every pull request." }), _jsx(Text, { fontSize: { base: 'md', md: 'lg' }, color: "whiteAlpha.900", children: "Submit code or voice notes, watch real-time review progress, and explore analytics that keep quality moving forward." })] }) }), _jsx(Box, { bg: "white", borderRadius: "3xl", boxShadow: "xl", px: { base: 4, md: 10 }, py: { base: 6, md: 10 }, children: _jsxs(Routes, { children: [_jsx(Route, { path: "/submit", element: _jsx(SubmitPage, {}) }), _jsx(Route, { path: "/dashboard", element: _jsx(DashboardPage, {}) }), _jsx(Route, { path: "/", element: _jsx(Navigate, { to: "/submit" }) })] }) })] }) }) }));
+}

@@ -5,7 +5,7 @@ import csv
 import io
 from typing import Any
 
-from beanie.odm.operators.find import In
+from beanie.operators import In
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse

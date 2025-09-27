@@ -26,14 +26,18 @@ export const ReviewQueue = () => {
   }
 
   return (
-    <Stack spacing={2}>
-      <Text fontWeight="semibold">Live queue</Text>
+    <Box bg="gray.50" borderRadius="2xl" px={{ base: 4, md: 6 }} py={{ base: 5, md: 6 }} borderWidth="1px" borderColor="gray.100" boxShadow="md">
       <Stack spacing={3}>
-        {jobs.map((job: ReviewJob) => (
-          <QueueItem key={job.id} job={job} />
-        ))}
+        <Text fontWeight="semibold" color="gray.700">
+          Live queue
+        </Text>
+        <Stack spacing={3}>
+          {jobs.map((job: ReviewJob) => (
+            <QueueItem key={job.id} job={job} />
+          ))}
+        </Stack>
       </Stack>
-    </Stack>
+    </Box>
   );
 };
 
@@ -41,7 +45,16 @@ const QueueItem = ({ job }: { job: ReviewJob }) => {
   const color = statusToColor[job.status] ?? 'gray';
   const label = statusToLabel[job.status] ?? job.status;
   return (
-    <HStack justify="space-between" borderWidth="1px" borderRadius="md" px={3} py={2}>
+    <HStack
+      justify="space-between"
+      borderWidth="1px"
+      borderRadius="lg"
+      px={4}
+      py={3}
+      borderColor="gray.200"
+      bg="white"
+      boxShadow="sm"
+    >
       <Stack spacing={0}>
         <Text fontWeight="medium">Submission #{job.id.slice(-6)}</Text>
         <Text fontSize="sm" color="gray.500">

@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     websocket_channel_prefix: str = Field("deepreview:ws", alias="WEBSOCKET_CHANNEL_PREFIX")
 
     sentry_dsn: str | None = Field(None, alias="SENTRY_DSN")
+    growthbook_api_host: AnyHttpUrl = Field(
+        "https://api.growthbook.io", alias="GROWTHBOOK_API_HOST"
+    )
     growthbook_client_key: str | None = Field(None, alias="GROWTHBOOK_CLIENT_KEY")
     posthog_api_key: str | None = Field(None, alias="POSTHOG_API_KEY")
 

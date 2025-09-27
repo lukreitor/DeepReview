@@ -9,8 +9,6 @@ from celery import shared_task
 
 from app.models import Submission, SubmissionStatus
 from app.services.ai import AIReviewService
-from app.services.review_service import store_review
-
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
 def process_review_submission(self, submission_id: str) -> None:
@@ -44,5 +42,7 @@ async def _process_submission(submission_id: str) -> None:
             payload_json = {"summary": "Unable to parse AI response", "provider": response.provider}
     else:
         payload_json = payload
+
+    from app.services.review_service import store_review
 
     await store_review(submission, payload_json)

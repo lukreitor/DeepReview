@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { useForm, type Resolver } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
@@ -25,8 +25,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const formResolver: Resolver<FormValues> = zodResolver(schema) as Resolver<FormValues>; // eslint-disable-line @typescript-eslint/no-unsafe-call
-
 export const LoginPage = () => {
   const toast = useToast();
   const navigate = useNavigate();
@@ -39,7 +37,7 @@ export const LoginPage = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: formResolver,
+    resolver: zodResolver(schema),
     defaultValues: {
       email: '',
       password: '',

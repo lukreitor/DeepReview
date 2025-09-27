@@ -52,6 +52,7 @@ ignore = ["E203", "W503"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 addopts = "-ra --maxfail=1 --strict-markers --strict-config"
+pythonpath = ["."]
 
 [build-system]
 requires = ["poetry-core>=1.9.0"]
