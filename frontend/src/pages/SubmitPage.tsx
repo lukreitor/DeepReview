@@ -64,7 +64,6 @@ export const SubmitPage = () => {
 
   const {
     control,
-    register,
     handleSubmit,
     formState: { errors },
     reset,
@@ -254,6 +253,27 @@ export const SubmitPage = () => {
                   </AlertDescription>
                 </Alert>
               )}
+              <FormControl>
+                <FormLabel>Language</FormLabel>
+                <Controller
+                  name="language"
+                  control={control}
+                  render={({ field }) => (
+                    <Select {...field} value={field.value ?? ''}>
+                      <option value="python">Python</option>
+                      <option value="javascript">JavaScript</option>
+                      <option value="typescript">TypeScript</option>
+                      <option value="go">Go</option>
+                      <option value="java">Java</option>
+                    </Select>
+                  )}
+                />
+                {mode === 'audio' && (
+                  <FormHelperText>
+                    We use this setting to prime the transcription prompt for audio uploads.
+                  </FormHelperText>
+                )}
+              </FormControl>
               <Tabs
                 index={mode === 'code' ? 0 : 1}
                 onChange={(index: number) => setMode(index === 0 ? 'code' : 'audio')}
@@ -269,17 +289,6 @@ export const SubmitPage = () => {
                 <TabPanels mt={4}>
                   <TabPanel px={0}>
                     <Stack as="form" spacing={6} onSubmit={(event) => void handleCodeSubmit(event)}>
-                      <FormControl>
-                        <FormLabel>Language</FormLabel>
-                        <Select {...register('language')}>
-                          <option value="python">Python</option>
-                          <option value="javascript">JavaScript</option>
-                          <option value="typescript">TypeScript</option>
-                          <option value="go">Go</option>
-                          <option value="java">Java</option>
-                        </Select>
-                      </FormControl>
-
                       <FormControl isInvalid={Boolean(contentError)}>
                         <FormLabel>Snippet</FormLabel>
                         <Box borderWidth="1px" borderRadius="lg" overflow="hidden" boxShadow="sm">
@@ -342,21 +351,9 @@ export const SubmitPage = () => {
                   </TabPanel>
                   <TabPanel px={0}>
                     <Stack spacing={5}>
-                      <FormControl>
-                        <FormLabel>Expected language</FormLabel>
-                        <Select {...register('language')}>
-                          <option value="python">Python</option>
-                          <option value="javascript">JavaScript</option>
-                          <option value="typescript">TypeScript</option>
-                          <option value="go">Go</option>
-                          <option value="java">Java</option>
-                        </Select>
-                        <FormHelperText>
-                          We use this field to prime the AI prompt, but transcription will still try
-                          to identify the correct language automatically.
-                        </FormHelperText>
-                      </FormControl>
-
+                      <Text fontSize="sm" color="gray.500">
+                        Selected language: {watchedLanguage?.toUpperCase()}
+                      </Text>
                       <FormControl>
                         <FormLabel>Audio file</FormLabel>
                         <Input

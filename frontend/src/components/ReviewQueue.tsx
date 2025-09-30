@@ -1,4 +1,4 @@
-import { Badge, Box, HStack, Spinner, Stack, Text } from '@chakra-ui/react';
+import { Badge, Box, Code, HStack, Spinner, Stack, Text } from '@chakra-ui/react';
 
 import { useReviewStore, type ReviewJob, type ReviewState } from '@store/reviewStore';
 
@@ -52,6 +52,11 @@ export const ReviewQueue = () => {
 const QueueItem = ({ job }: { job: ReviewJob }) => {
   const color = statusToColor[job.status] ?? 'gray';
   const label = statusToLabel[job.status] ?? job.status;
+  const isFinalState = ['completed', 'cached', 'failed'].includes(job.status);
+  const languageLabel = job.language ? job.language.toUpperCase() : 'UNKNOWN';
+  const sourceLabel = job.source === 'audio' ? 'Audio' : 'Code';
+  const submittedAt = job.submittedAt ? new Date(job.submittedAt).toLocaleTimeString() : undefined;
+  const completedAt = job.completedAt ? new Date(job.completedAt).toLocaleTimeString() : undefined;
   return (
     <HStack
       justify="space-between"
@@ -62,12 +67,58 @@ const QueueItem = ({ job }: { job: ReviewJob }) => {
       borderColor="gray.200"
       bg="white"
       boxShadow="sm"
+      alignItems="flex-start"
     >
-      <Stack spacing={0}>
-        <Text fontWeight="medium">Submission #{job.id.slice(-6)}</Text>
-        <Text fontSize="sm" color="gray.500">
-          {job.cached ? 'Served from cache' : 'Awaiting AI response'}
-        </Text>
+      <Stack spacing={2} flex={1} pr={4}>
+        <Stack spacing={0}>
+          <Text fontWeight="medium">Submission #{job.id.slice(-6)}</Text>
+          <Text fontSize="sm" color="gray.500">
+            {languageLabel} · {sourceLabel}
+          </Text>
+          <Text fontSize="xs" color="gray.400">
+            {submittedAt ? `Submitted ${submittedAt}` : 'Submission queued'}
+            {completedAt ? ` · Completed ${completedAt}` : ''}
+          </Text>
+          <Text fontSize="sm" color="gray.500">
+            {job.cached
+              ? 'Served from cache'
+              : isFinalState
+                ? 'Review ready'
+                : 'Awaiting AI response'}
+          </Text>
+        </Stack>
+        {isFinalState && (
+          <Stack spacing={2} fontSize="sm" color="gray.600">
+            {job.summary && <Text>{job.summary}</Text>}
+            {job.issues?.length ? (
+              <Stack spacing={1}>
+                {job.issues.map((issue, index) => (
+                  <Badge
+                    key={`${job.id}-issue-${index}`}
+                    colorScheme="orange"
+                    alignSelf="flex-start"
+                  >
+                    {issue.severity?.toUpperCase() ?? 'ISSUE'} · {issue.category}:{' '}
+                    {issue.description}
+                  </Badge>
+                ))}
+              </Stack>
+            ) : (
+              <Text color="gray.500">No critical issues reported.</Text>
+            )}
+            {job.improvedCode && (
+              <Box bg="gray.50" borderRadius="md" p={3} borderWidth="1px" borderColor="gray.100">
+                <Text fontSize="xs" color="gray.500" mb={1}>
+                  Suggested snippet
+                </Text>
+                <Code whiteSpace="pre" display="block" overflowX="auto">
+                  {job.improvedCode.slice(0, 600)}
+                  {job.improvedCode.length > 600 ? '…' : ''}
+                </Code>
+              </Box>
+            )}
+          </Stack>
+        )}
       </Stack>
       <HStack spacing={2}>
         {job.status === 'processing' && <Spinner size="sm" />}

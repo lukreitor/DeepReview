@@ -30,6 +30,12 @@ export const serializeReviewFilters = (filters) => {
         }
         params.to = toDate.toISOString();
     }
+    if (typeof filters.page === 'number' && filters.page > 0) {
+        params.page = filters.page;
+    }
+    if (typeof filters.pageSize === 'number' && filters.pageSize > 0) {
+        params.page_size = filters.pageSize;
+    }
     if (Object.keys(params).length === 0) {
         return undefined;
     }
@@ -43,8 +49,15 @@ export const useCreateReview = () => {
             const { data } = await apiClient.post('/reviews', payload);
             return data;
         },
-        onSuccess: (data) => {
-            upsertJob({ id: data.id, status: data.status, cached: data.cached });
+        onSuccess: (data, variables) => {
+            upsertJob({
+                id: data.id,
+                status: data.status,
+                cached: data.cached,
+                language: variables.language,
+                source: variables.source,
+                submittedAt: new Date().toISOString(),
+            });
             void queryClient.invalidateQueries({ queryKey: ['reviews'] });
             void queryClient.invalidateQueries({ queryKey: ['review-summary'] });
         },
@@ -72,14 +85,16 @@ export const useReviewStream = () => {
     const upsertJob = useReviewStore((state) => state.upsert);
     const removeJob = useReviewStore((state) => state.remove);
     const queryClient = useQueryClient();
+    const completedJobTtl = 20000;
     useEffect(() => {
         if (!token) {
             return;
         }
         const socket = openReviewStream(token, (event) => {
-            if (typeof event.submissionId === 'string' && typeof event.status === 'string') {
+            const submissionId = event.submissionId;
+            if (typeof submissionId === 'string' && typeof event.status === 'string') {
                 upsertJob({
-                    id: event.submissionId,
+                    id: submissionId,
                     status: event.status,
                     cached: Boolean(event.cached),
                     score: typeof event.score === 'number' ? event.score : undefined,
@@ -87,9 +102,10 @@ export const useReviewStream = () => {
                 void queryClient.invalidateQueries({ queryKey: ['reviews'] });
                 void queryClient.invalidateQueries({ queryKey: ['review-summary'] });
                 if (['completed', 'failed', 'cached'].includes(event.status)) {
+                    void hydrateJobDetails(submissionId, Boolean(event.cached), event.status, upsertJob);
                     window.setTimeout(() => {
-                        removeJob(event.submissionId);
-                    }, 3000);
+                        removeJob(submissionId);
+                    }, completedJobTtl);
                 }
             }
         });
@@ -97,4 +113,28 @@ export const useReviewStream = () => {
             socket.close(1000, 'component-unmount');
         };
     }, [token, upsertJob, removeJob, queryClient]);
+};
+const hydrateJobDetails = async (submissionId, cached, status, upsertJob) => {
+    try {
+        const { data } = await apiClient.get(`/reviews/${submissionId}`);
+        upsertJob({
+            id: submissionId,
+            status: status || data.submission.status,
+            cached,
+            score: data.review?.score ?? undefined,
+            language: data.submission.language,
+            source: data.submission.source,
+            summary: data.review?.summary ?? null,
+            issues: data.review?.issues ?? [],
+            improvedCode: data.review?.improved_code ?? null,
+            submittedAt: data.submission.created_at,
+            completedAt: data.review?.created_at,
+            requestId: data.submission.request_id,
+            metadata: data.submission.metadata,
+            transcriptText: data.submission.transcript_text,
+        });
+    }
+    catch (error) {
+        console.error('Failed to hydrate review job details', error);
+    }
 };

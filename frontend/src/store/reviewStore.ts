@@ -5,6 +5,21 @@ export type ReviewJob = {
   status: string;
   cached?: boolean;
   score?: number;
+  language?: string;
+  source?: string;
+  summary?: string | null;
+  issues?: Array<{
+    severity: string;
+    category: string;
+    description?: string | null;
+    recommendation?: string | null;
+  }>;
+  improvedCode?: string | null;
+  submittedAt?: string;
+  completedAt?: string;
+  requestId?: string;
+  metadata?: Record<string, unknown>;
+  transcriptText?: string | null;
 };
 
 export type ReviewState = {

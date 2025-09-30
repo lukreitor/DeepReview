@@ -35,7 +35,8 @@ class AnalyticsService:
 
         past_week = datetime.utcnow() - timedelta(days=6)
         submissions = await Submission.find(
-            (Submission.user_id == user_id) & (Submission.created_at >= past_week)
+            Submission.user_id == user_id,
+            Submission.created_at >= past_week,
         ).to_list()
         throughput = {}
         for submission in submissions:
@@ -52,15 +53,16 @@ class AnalyticsService:
                 issues[issue.category] = issues.get(issue.category, 0) + 1
 
         pending_count = await Submission.find(
-            (Submission.user_id == user_id)
-            & In(Submission.status, [SubmissionStatus.PENDING, SubmissionStatus.PROCESSING])
+            Submission.user_id == user_id,
+            In(Submission.status, [SubmissionStatus.PENDING, SubmissionStatus.PROCESSING]),
         ).count()
         completed_count = await Submission.find(
-            (Submission.user_id == user_id)
-            & In(Submission.status, [SubmissionStatus.COMPLETED, SubmissionStatus.CACHED])
+            Submission.user_id == user_id,
+            In(Submission.status, [SubmissionStatus.COMPLETED, SubmissionStatus.CACHED]),
         ).count()
         failed_count = await Submission.find(
-            (Submission.user_id == user_id) & (Submission.status == SubmissionStatus.FAILED)
+            Submission.user_id == user_id,
+            Submission.status == SubmissionStatus.FAILED,
         ).count()
 
         turnaround_samples: List[float] = []

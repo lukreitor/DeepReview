@@ -1,12 +1,10 @@
 import { getApiBaseUrl } from './api';
-const defaultWsBase = 'ws://localhost:8000/ws';
-const configuredWsBase = import.meta.env.VITE_WS_BASE_URL ?? defaultWsBase;
+const fallbackWsBase = 'ws://localhost:8000/ws';
+const configuredWsBase = import.meta.env.VITE_WS_BASE_URL;
 const isReviewEvent = (value) => typeof value === 'object' && value !== null;
 export const openReviewStream = (token, handler) => {
-    const base = configuredWsBase || deriveWsUrl();
-    const url = new URL('/reviews', base);
-    url.searchParams.set('token', token);
-    const socket = new WebSocket(url.toString());
+    const socketUrl = buildSocketUrl(token);
+    const socket = new WebSocket(socketUrl);
     socket.addEventListener('message', (event) => {
         try {
             if (typeof event.data !== 'string') {
@@ -30,13 +28,62 @@ export const openReviewStream = (token, handler) => {
     });
     return socket;
 };
-const deriveWsUrl = () => {
-    const baseUrl = getApiBaseUrl();
-    if (baseUrl.startsWith('https://')) {
-        return baseUrl.replace('https://', 'wss://').replace(/\/api\/?$/, '/ws');
+const buildSocketUrl = (token) => {
+    const baseUrl = resolveWsBaseUrl();
+    const url = new URL(baseUrl.toString());
+    url.pathname = `${url.pathname.replace(/\/$/, '')}/reviews`;
+    url.searchParams.set('token', token);
+    return url.toString();
+};
+const resolveWsBaseUrl = () => {
+    const candidate = configuredWsBase?.trim() || deriveWsBaseFromApi();
+    return normaliseWsBase(candidate);
+};
+const deriveWsBaseFromApi = () => {
+    const apiBase = getApiBaseUrl() || '/api';
+    const origin = getWindowOrigin();
+    const absoluteApi = apiBase.startsWith('http') ? apiBase : new URL(apiBase, origin).toString();
+    const apiUrl = new URL(absoluteApi);
+    apiUrl.protocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    const trimmedPath = apiUrl.pathname.replace(/\/$/, '');
+    const withoutApi = trimmedPath.replace(/\/api$/i, '');
+    apiUrl.pathname = `${withoutApi}/ws`.replace(/\/\//g, '/');
+    apiUrl.search = '';
+    apiUrl.hash = '';
+    return apiUrl.toString();
+};
+const normaliseWsBase = (value) => {
+    try {
+        let candidate = value.trim();
+        if (!candidate) {
+            throw new Error('Empty websocket base value');
+        }
+        const origin = getWindowOrigin();
+        if (candidate.startsWith('/')) {
+            candidate = `${origin.replace(/\/$/, '')}${candidate}`;
+        }
+        if (candidate.startsWith('http://') || candidate.startsWith('https://')) {
+            const httpUrl = new URL(candidate);
+            httpUrl.protocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+            httpUrl.pathname = httpUrl.pathname.replace(/\/$/, '');
+            httpUrl.search = '';
+            httpUrl.hash = '';
+            return httpUrl;
+        }
+        const url = new URL(candidate);
+        url.pathname = url.pathname.replace(/\/$/, '');
+        url.search = '';
+        url.hash = '';
+        return url;
     }
-    if (baseUrl.startsWith('http://')) {
-        return baseUrl.replace('http://', 'ws://').replace(/\/api\/?$/, '/ws');
+    catch (error) {
+        console.warn('Falling back to default websocket base URL', error);
+        return new URL(fallbackWsBase);
     }
-    return defaultWsBase;
+};
+const getWindowOrigin = () => {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
+    }
+    return 'http://localhost:3000';
 };

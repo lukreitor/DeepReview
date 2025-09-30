@@ -34,22 +34,27 @@ def create_app() -> FastAPI:
     derived_origins: set[str] = {primary_origin}
 
     # When developing locally it's common to access the UI via different localhost aliases or ports.
-    if settings.frontend_url.host in {"localhost", "127.0.0.1"}:
-        host_variants = {"localhost", "127.0.0.1"}
-        common_ports = {3000, 4173, 5173, settings.frontend_url.port or 80}
-        for host in host_variants:
-            derived_origins.add(f"http://{host}")
-            derived_origins.add(f"https://{host}")
-            for port in common_ports:
-                if port in {80, 443, None}:
-                    continue
-                derived_origins.add(f"http://{host}:{port}")
-                derived_origins.add(f"https://{host}:{port}")
+    host_variants = {settings.frontend_url.host, "localhost", "127.0.0.1", "0.0.0.0"}
+    host_variants = {host for host in host_variants if host}
+    common_ports = {settings.frontend_url.port, 3000, 4173, 5173, 80, 443}
+
+    for host in host_variants:
+        derived_origins.add(f"http://{host}")
+        derived_origins.add(f"https://{host}")
+        for port in common_ports:
+            if port in {None, 80, 443}:
+                continue
+            derived_origins.add(f"http://{host}:{port}")
+            derived_origins.add(f"https://{host}:{port}")
+
+    allow_origin_regex = None
+    if settings.environment == "development":
+        allow_origin_regex = r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$"
 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=sorted(derived_origins),
-        allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+        allow_origin_regex=allow_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

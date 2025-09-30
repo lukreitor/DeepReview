@@ -13,7 +13,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from app.models import Review, Submission, SubmissionCreate, SubmissionStatus, User
+from app.models import Review, Submission, SubmissionCreate, SubmissionSource, SubmissionStatus, User
 from app.services import review_service
 from app.services.review_service import ReviewQueueUnavailableError
 from app.services.analytics import AnalyticsService
@@ -38,6 +38,44 @@ class SubmissionQueuedResponse(BaseModel):
                 "request_id": "c365a0f65454458d81249749bd8a3b4f",
             }
         }
+
+
+def _serialise_submission(submission: Submission) -> dict[str, Any]:
+    status_value = submission.status.value if isinstance(submission.status, SubmissionStatus) else submission.status
+    source_value = submission.source.value if isinstance(submission.source, SubmissionSource) else submission.source
+    return {
+        "id": str(submission.id),
+        "request_id": submission.request_id,
+        "language": submission.language,
+        "status": status_value,
+        "source": source_value,
+        "content": submission.content,
+        "metadata": submission.metadata,
+        "transcript_text": submission.transcript_text,
+        "transcript_confidence": submission.transcript_confidence,
+        "created_at": submission.created_at.isoformat(),
+        "updated_at": submission.updated_at.isoformat(),
+    }
+
+
+def _serialise_review(review: Review | None) -> dict[str, Any] | None:
+    if review is None:
+        return None
+
+    return {
+        "id": str(review.id),
+        "submission_id": review.submission_id,
+        "user_id": review.user_id,
+        "provider": review.provider,
+        "score": review.score,
+        "summary": review.summary,
+        "issues": [issue.model_dump() for issue in review.issues],
+        "security_concerns": review.security_concerns,
+        "performance_recommendations": review.performance_recommendations,
+        "additional_suggestions": review.additional_suggestions,
+        "improved_code": review.improved_code,
+        "created_at": review.created_at.isoformat(),
+    }
 
 
 @router.post("", status_code=status.HTTP_202_ACCEPTED, response_model=SubmissionQueuedResponse)
@@ -144,12 +182,20 @@ async def list_reviews(
 
     encoder_overrides = {PydanticObjectId: str}
 
+    encoded_items = [
+        {
+            "submission": _serialise_submission(item["submission"]),
+            "review": _serialise_review(item["review"]),
+        }
+        for item in filtered_items
+    ]
+
     return {
-        "items": jsonable_encoder(filtered_items, custom_encoder=encoder_overrides),
+        "items": encoded_items,
         "page": page,
         "pageSize": page_size,
         "total": total,
-        "filteredTotal": len(filtered_items),
+        "filteredTotal": len(encoded_items),
         "summary": jsonable_encoder(summary, custom_encoder=encoder_overrides),
     }
 
@@ -254,21 +300,18 @@ async def get_review(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
 
     review = await Review.find_one(
-        (Review.submission_id == submission_id) & (Review.user_id == str(current_user.id))
+        Review.submission_id == submission_id,
+        Review.user_id == str(current_user.id),
     )
 
     status_value = submission.status.value if isinstance(submission.status, SubmissionStatus) else submission.status
-    encoder_overrides = {PydanticObjectId: str}
 
-    return jsonable_encoder(
-        {
-            "id": str(submission.id),
-            "status": status_value,
-            "submission": submission,
-            "review": review,
-        },
-        custom_encoder=encoder_overrides,
-    )
+    return {
+        "id": str(submission.id),
+        "status": status_value,
+        "submission": _serialise_submission(submission),
+        "review": _serialise_review(review),
+    }
 
 
 # Allow optional trailing slashes without relying on redirects to avoid CORS preflight failures.

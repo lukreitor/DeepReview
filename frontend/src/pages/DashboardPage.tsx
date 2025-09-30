@@ -1,10 +1,12 @@
 import {
   Badge,
+  Box,
   Button,
   Card,
   CardBody,
   CardHeader,
-  Divider,
+  Center,
+  Collapse,
   FormControl,
   FormLabel,
   Heading,
@@ -17,15 +19,22 @@ import {
   NumberInputStepper,
   Select,
   SimpleGrid,
+  Spinner,
   Stack,
   Stat,
   StatHelpText,
   StatLabel,
   StatNumber,
+  Table,
+  Tbody,
+  Td,
   Text,
+  Th,
+  Thead,
+  Tr,
   useToast,
 } from '@chakra-ui/react';
-import { Suspense, lazy, useMemo, useState } from 'react';
+import { Fragment, Suspense, lazy, useMemo, useState } from 'react';
 import {
   Line,
   LineChart,
@@ -65,16 +74,29 @@ const STATUS_OPTIONS = [
   { label: 'Failed', value: 'failed' },
 ];
 
+const STATUS_COLOR_MAP: Record<string, string> = {
+  pending: 'yellow',
+  processing: 'blue',
+  completed: 'green',
+  cached: 'green',
+  failed: 'red',
+};
+
 export const DashboardPage = () => {
   const toast = useToast();
   const [filters, setFilters] = useState<ReviewListFilters>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data: reviewsData, isLoading: loadingReviews } = useListReviews(filters);
+  const queryFilters = useMemo(() => ({ ...filters, page, pageSize }), [filters, page, pageSize]);
+
+  const { data: reviewsData, isLoading: loadingReviews } = useListReviews(queryFilters);
   const { data: summary, isLoading: loadingSummary } = useReviewSummary();
 
   const filteredCount = reviewsData?.filteredTotal ?? reviewsData?.items.length ?? 0;
   const totalCount = reviewsData?.total ?? filteredCount;
+  const totalPages = totalCount ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
 
   const handleFilterChange = <K extends keyof ReviewListFilters>(
     key: K,
@@ -95,9 +117,33 @@ export const DashboardPage = () => {
       }
       return next;
     });
+    if (page !== 1) {
+      setPage(1);
+    }
   };
 
-  const resetFilters = () => setFilters({});
+  const resetFilters = () => {
+    setFilters({});
+    setPage(1);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    if (nextPage < 1 || nextPage === page) {
+      return;
+    }
+    if (reviewsData && totalPages && nextPage > totalPages) {
+      return;
+    }
+    setPage(nextPage);
+  };
+
+  const handlePageSizeChange = (nextSize: number) => {
+    if (nextSize <= 0 || nextSize === pageSize) {
+      return;
+    }
+    setPageSize(nextSize);
+    setPage(1);
+  };
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -147,6 +193,11 @@ export const DashboardPage = () => {
         loading={loadingReviews}
         reviews={reviewsData?.items ?? []}
         summary={reviewsData?.summary}
+        page={page}
+        pageSize={pageSize}
+        total={totalCount}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
     </Stack>
   );
@@ -186,7 +237,7 @@ const AnalyticsHeader = ({ summaryLoading, summary }: AnalyticsHeaderProps) => (
           <StatNumber>
             {summaryLoading
               ? '…'
-              : summary?.turnaroundHours
+              : summary?.turnaroundHours != null
                 ? `${summary.turnaroundHours.toFixed(1)} h`
                 : '—'}
           </StatNumber>
@@ -331,6 +382,11 @@ const AnalyticsCharts = ({ summaryLoading, summary }: AnalyticsChartsProps) => {
     return null;
   }
 
+  const throughputData = summary?.throughput.daily ?? [];
+  const issueData = summary?.commonIssues ?? [];
+  const hasThroughput = throughputData.length > 0;
+  const hasIssues = issueData.length > 0;
+
   return (
     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
       <Card>
@@ -338,15 +394,23 @@ const AnalyticsCharts = ({ summaryLoading, summary }: AnalyticsChartsProps) => {
           <Heading size="md">Throughput (last 7 days)</Heading>
         </CardHeader>
         <CardBody height="250px">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={summary?.throughput.daily ?? []}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Line type="monotone" dataKey="count" stroke="#3182ce" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
+          {hasThroughput ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={throughputData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Line type="monotone" dataKey="count" stroke="#3182ce" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <Center height="100%">
+              <Text fontSize="sm" color="gray.500" textAlign="center">
+                No submissions recorded in the last 7 days yet.
+              </Text>
+            </Center>
+          )}
         </CardBody>
       </Card>
       <Card>
@@ -354,15 +418,23 @@ const AnalyticsCharts = ({ summaryLoading, summary }: AnalyticsChartsProps) => {
           <Heading size="md">Most frequent issue categories</Heading>
         </CardHeader>
         <CardBody height="250px">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={summary?.commonIssues ?? []}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="category" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#805AD5" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {hasIssues ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={issueData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="category" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#805AD5" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <Center height="100%">
+              <Text fontSize="sm" color="gray.500" textAlign="center">
+                No recurring issues detected yet.
+              </Text>
+            </Center>
+          )}
         </CardBody>
       </Card>
     </SimpleGrid>
@@ -373,89 +445,231 @@ type RecentReviewsProps = {
   loading: boolean;
   reviews: NonNullable<ReturnType<typeof useListReviews>['data']>['items'];
   summary?: NonNullable<ReturnType<typeof useListReviews>['data']>['summary'];
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 };
 
-const RecentReviews = ({ loading, reviews, summary }: RecentReviewsProps) => (
-  <Card>
-    <CardHeader>
-      <Heading size="md">Recent reviews</Heading>
-      <Text fontSize="sm" color="gray.500">
-        See the latest submissions and compare them with the suggested AI improvements.
-      </Text>
-      {summary && (
-        <HStack spacing={3} mt={3} flexWrap="wrap">
-          <Badge colorScheme="green" variant="subtle">
-            Completed {summary.completed}
-          </Badge>
-          <Badge colorScheme="yellow" variant="subtle">
-            Pending {summary.pending}
-          </Badge>
-          <Badge colorScheme="red" variant="subtle">
-            Failed {summary.failed}
-          </Badge>
-          {summary.avgScore != null && (
-            <Badge colorScheme="purple" variant="subtle">
-              Avg score {summary.avgScore.toFixed(2)}
-            </Badge>
-          )}
-        </HStack>
-      )}
-    </CardHeader>
-    <CardBody>
-      {loading && <Text>Loading reviews…</Text>}
-      {!loading && !reviews.length && <Text>No reviews found yet.</Text>}
-      <Stack spacing={8} divider={<Divider />}>
-        {reviews
-          .filter((item) => item?.submission)
-          .map(({ submission, review }) => {
-            const submissionId = String(submission.id ?? '');
-            if (!submissionId) {
-              return null;
-            }
-            const languageLabel = submission.language
-              ? submission.language.toUpperCase()
-              : 'UNKNOWN';
-            const shortId = submissionId.length > 6 ? submissionId.slice(-6) : submissionId;
+const RecentReviews = ({
+  loading,
+  reviews,
+  summary,
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
+}: RecentReviewsProps) => {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const totalPages = total ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+  const hasReviews = reviews.length > 0;
 
-            return (
-              <Stack key={submissionId} spacing={3}>
-                <Heading size="sm">
-                  {languageLabel} • #{shortId}
-                </Heading>
-                <Text fontSize="sm" color="gray.500">
-                  Status: {submission.status}
+  const toggleRow = (submissionId: string) => {
+    setExpandedId((current) => (current === submissionId ? null : submissionId));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <Heading size="md">Recent reviews</Heading>
+        <Text fontSize="sm" color="gray.500">
+          Explore every submission that matches your filters, with summaries, issues, and AI diffs.
+        </Text>
+        {summary && (
+          <HStack spacing={3} mt={3} flexWrap="wrap">
+            <Badge colorScheme="green" variant="subtle">
+              Completed {summary.completed}
+            </Badge>
+            <Badge colorScheme="yellow" variant="subtle">
+              Pending {summary.pending}
+            </Badge>
+            <Badge colorScheme="red" variant="subtle">
+              Failed {summary.failed}
+            </Badge>
+            {summary.avgScore != null && (
+              <Badge colorScheme="purple" variant="subtle">
+                Avg score {summary.avgScore.toFixed(2)}
+              </Badge>
+            )}
+          </HStack>
+        )}
+      </CardHeader>
+      <CardBody>
+        {loading && (
+          <HStack spacing={3} color="gray.500">
+            <Spinner size="sm" />
+            <Text>Loading reviews…</Text>
+          </HStack>
+        )}
+        {!loading && !hasReviews && (
+          <Text fontSize="sm" color="gray.600">
+            No reviews found for the selected filters. Try adjusting language, status, or date range
+            above.
+          </Text>
+        )}
+        {hasReviews && (
+          <Stack spacing={5}>
+            <Box overflowX="auto">
+              <Table size="sm" variant="simple">
+                <Thead>
+                  <Tr>
+                    <Th>ID</Th>
+                    <Th>Language</Th>
+                    <Th>Status</Th>
+                    <Th>Score</Th>
+                    <Th>Summary</Th>
+                    <Th>Submitted</Th>
+                    <Th>Completed</Th>
+                    <Th>Source</Th>
+                    <Th textAlign="right">Details</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {reviews.map(({ submission, review }) => {
+                    const submissionId = String(submission.id ?? '');
+                    if (!submissionId) {
+                      return null;
+                    }
+                    const shortId = submissionId.slice(-6).toUpperCase();
+                    const languageLabel = submission.language
+                      ? submission.language.toUpperCase()
+                      : 'UNKNOWN';
+                    const status = submission.status?.toString() ?? 'unknown';
+                    const statusColor = STATUS_COLOR_MAP[status] ?? 'gray';
+                    const createdAt = submission.created_at
+                      ? new Date(submission.created_at).toLocaleString()
+                      : '—';
+                    const completedAt = review?.created_at
+                      ? new Date(review.created_at).toLocaleString()
+                      : '—';
+                    const summaryText = review?.summary ?? '—';
+                    const scoreDisplay =
+                      typeof review?.score === 'number' ? review.score.toFixed(2) : '—';
+                    const issues = review?.issues ?? [];
+                    const improvedCode = review?.improved_code ?? null;
+
+                    return (
+                      <Fragment key={submissionId}>
+                        <Tr>
+                          <Td fontFamily="mono">#{shortId}</Td>
+                          <Td>
+                            <Badge colorScheme="blue" variant="subtle">
+                              {languageLabel}
+                            </Badge>
+                          </Td>
+                          <Td>
+                            <Badge colorScheme={statusColor}>{status.toUpperCase()}</Badge>
+                          </Td>
+                          <Td>{scoreDisplay}</Td>
+                          <Td maxW="280px">
+                            <Text noOfLines={2}>{summaryText}</Text>
+                          </Td>
+                          <Td>{createdAt}</Td>
+                          <Td>{completedAt}</Td>
+                          <Td textTransform="capitalize">{submission.source ?? 'code'}</Td>
+                          <Td textAlign="right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleRow(submissionId)}
+                            >
+                              {expandedId === submissionId ? 'Hide details' : 'View details'}
+                            </Button>
+                          </Td>
+                        </Tr>
+                        <Tr>
+                          <Td colSpan={9} border="none" p={0} bg="transparent">
+                            <Collapse in={expandedId === submissionId} animateOpacity>
+                              <Box px={4} py={4} bg="gray.50">
+                                <Stack spacing={3} fontSize="sm" color="gray.700">
+                                  <Text fontWeight="semibold">AI summary</Text>
+                                  <Text>{summaryText}</Text>
+                                  <Text fontWeight="semibold">Issues</Text>
+                                  {issues.length ? (
+                                    <Stack spacing={1}>
+                                      {issues.map((issue, index) => (
+                                        <Badge
+                                          key={`${submissionId}-issue-${index}`}
+                                          colorScheme="orange"
+                                          alignSelf="flex-start"
+                                        >
+                                          {issue.severity?.toUpperCase() ?? 'ISSUE'} ·{' '}
+                                          {issue.category}:{' '}
+                                          {issue.description ?? 'No description provided'}
+                                        </Badge>
+                                      ))}
+                                    </Stack>
+                                  ) : (
+                                    <Text color="gray.500">No critical issues highlighted.</Text>
+                                  )}
+                                  {improvedCode && (
+                                    <Stack spacing={2}>
+                                      <Text fontWeight="semibold">Suggested diff</Text>
+                                      <Suspense
+                                        fallback={
+                                          <Text fontSize="sm" color="gray.400">
+                                            Loading diff…
+                                          </Text>
+                                        }
+                                      >
+                                        <ReviewDiff
+                                          original={submission.content}
+                                          improved={improvedCode}
+                                          language={submission.language}
+                                        />
+                                      </Suspense>
+                                    </Stack>
+                                  )}
+                                </Stack>
+                              </Box>
+                            </Collapse>
+                          </Td>
+                        </Tr>
+                      </Fragment>
+                    );
+                  })}
+                </Tbody>
+              </Table>
+            </Box>
+            <HStack justify="space-between" align="center" flexWrap="wrap" gap={3}>
+              <HStack spacing={3}>
+                <Button size="sm" onClick={() => onPageChange(page - 1)} isDisabled={page <= 1}>
+                  Previous
+                </Button>
+                <Text fontSize="sm" color="gray.600">
+                  Page {page} of {totalPages}
                 </Text>
-                {review?.summary && <Text>{review.summary}</Text>}
-                {review?.issues?.length ? (
-                  <Stack spacing={2}>
-                    {review.issues.map((issue, index) => (
-                      <Badge key={`${submissionId}-issue-${index}`} colorScheme="orange">
-                        {issue.severity.toUpperCase()} • {issue.category}: {issue.description}
-                      </Badge>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Text fontSize="sm" color="gray.500">
-                    No critical issues highlighted.
-                  </Text>
-                )}
-                <Suspense
-                  fallback={
-                    <Text fontSize="sm" color="gray.400">
-                      Loading diff…
-                    </Text>
-                  }
+                <Button
+                  size="sm"
+                  onClick={() => onPageChange(page + 1)}
+                  isDisabled={page >= totalPages}
                 >
-                  <ReviewDiff
-                    original={submission.content}
-                    improved={review?.improved_code}
-                    language={submission.language}
-                  />
-                </Suspense>
-              </Stack>
-            );
-          })}
-      </Stack>
-    </CardBody>
-  </Card>
-);
+                  Next
+                </Button>
+              </HStack>
+              <HStack spacing={2} align="center">
+                <Text fontSize="sm" color="gray.500">
+                  Rows per page
+                </Text>
+                <Select
+                  size="sm"
+                  width="auto"
+                  value={pageSize}
+                  onChange={(event) => onPageSizeChange(Number(event.target.value))}
+                >
+                  {[10, 20, 50].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </Select>
+              </HStack>
+            </HStack>
+          </Stack>
+        )}
+      </CardBody>
+    </Card>
+  );
+};

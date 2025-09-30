@@ -1,6 +1,6 @@
 import { getApiBaseUrl } from './api';
 
-const fallbackWsBase = 'ws://localhost:8000/api/ws';
+const fallbackWsBase = 'ws://localhost:8000/ws';
 const configuredWsBase = import.meta.env.VITE_WS_BASE_URL;
 
 type ReviewEvent = Record<string, unknown> & {
@@ -62,7 +62,10 @@ const deriveWsBaseFromApi = (): string => {
   const absoluteApi = apiBase.startsWith('http') ? apiBase : new URL(apiBase, origin).toString();
   const apiUrl = new URL(absoluteApi);
   apiUrl.protocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-  apiUrl.pathname = `${apiUrl.pathname.replace(/\/$/, '')}/ws`;
+
+  const trimmedPath = apiUrl.pathname.replace(/\/$/, '');
+  const withoutApi = trimmedPath.replace(/\/api$/i, '');
+  apiUrl.pathname = `${withoutApi}/ws`.replace(/\/\//g, '/');
   apiUrl.search = '';
   apiUrl.hash = '';
   return apiUrl.toString();
