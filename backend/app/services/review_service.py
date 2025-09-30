@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 from datetime import datetime
 from typing import Any
 
+from celery.exceptions import CeleryError
+from kombu.exceptions import OperationalError
+
+from app.core.config import get_settings
 from app.models import (
     Review,
     Submission,
@@ -16,7 +21,13 @@ from app.models import (
 from app.services.cache import ReviewCache
 from app.services.notifications import NotificationService
 from app.services.transcription import TranscriptionService
-from app.tasks.review import process_review_submission
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
+
+
+class ReviewQueueUnavailableError(RuntimeError):
+    """Raised when the Celery broker or backend is unreachable."""
 
 
 async def create_submission(payload: SubmissionCreate, user_id: str) -> Submission:
@@ -73,7 +84,20 @@ async def enqueue_review(submission: Submission) -> None:
     submission.updated_at = datetime.utcnow()
     await submission.save()
     await _publish_update(submission, {})
-    process_review_submission.delay(str(submission.id))
+
+    try:
+        task = _get_process_review_submission()
+        task.apply_async(
+            args=(str(submission.id),),
+            queue=settings.celery_default_queue,
+        )
+    except (OperationalError, CeleryError, ConnectionError) as exc:  # type: ignore[arg-type]
+        logger.error("Failed to enqueue submission %s", submission.id, exc_info=exc)
+        submission.status = SubmissionStatus.FAILED
+        submission.updated_at = datetime.utcnow()
+        await submission.save()
+        await _publish_update(submission, {}, cached=False)
+        raise ReviewQueueUnavailableError("Could not reach review processing queue") from exc
 
 
 async def store_review(submission: Submission, data: dict[str, Any]) -> Review:
@@ -102,6 +126,12 @@ async def store_review(submission: Submission, data: dict[str, Any]) -> Review:
     await _publish_update(submission, _build_cache_payload(review))
 
     return review
+
+
+def _get_process_review_submission():
+    from app.tasks.review import process_review_submission
+
+    return process_review_submission
 
 
 async def _store_cached_review(submission: Submission, data: dict[str, Any]) -> Review:

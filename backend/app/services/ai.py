@@ -1,13 +1,24 @@
 """DeepSeek AI review integration."""
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, Optional
 
 import httpx
+from httpx import HTTPStatusError
 from pydantic import BaseModel
-from tenacity import AsyncRetrying, RetryError, stop_after_attempt, wait_exponential
+from tenacity import (
+    AsyncRetrying,
+    RetryError,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from app.core.config import get_settings
+
+
+logger = logging.getLogger(__name__)
 
 
 class ProviderResponse(BaseModel):
@@ -21,11 +32,18 @@ class AIReviewService:
         self.client = httpx.AsyncClient(timeout=30.0)
 
     async def review_code(self, submission: Dict[str, Any]) -> ProviderResponse:
+        if self._using_stubbed_credentials():
+            logger.warning(
+                "Using stubbed DeepSeek response because DEEPSEEK_API_KEY is not configured."
+            )
+            return self._build_stub_response(submission)
+
         prompt = self._build_prompt(submission)
         headers = {"Authorization": f"Bearer {self.settings.deepseek_api_key}"}
 
         try:
             async for attempt in AsyncRetrying(
+                retry=retry_if_exception(_is_retryable_exception),
                 stop=stop_after_attempt(3),
                 wait=wait_exponential(multiplier=1, min=2, max=10),
                 reraise=True,
@@ -41,9 +59,17 @@ class AIReviewService:
             if exc.last_attempt.result() is not None:
                 raise exc.last_attempt.result()
             raise
+        except HTTPStatusError as exc:
+            if exc.response.status_code in {401, 403}:
+                logger.error("DeepSeek authentication failed: %s", exc.response.text)
+            raise
 
         data = response.json()
         return ProviderResponse(provider="deepseek", payload=data)
+
+    def _using_stubbed_credentials(self) -> bool:
+        api_key = (self.settings.deepseek_api_key or "").strip()
+        return not api_key or "replace-with" in api_key.lower()
 
     def _build_prompt(self, submission: Dict[str, Any]) -> Dict[str, Any]:
         template = (
@@ -65,6 +91,36 @@ class AIReviewService:
             "response_format": {"type": "json_object"},
         }
 
+    def _build_stub_response(self, submission: Dict[str, Any]) -> ProviderResponse:
+        preview = submission.get("content", "").splitlines()
+        summary_snippet = preview[0][:120] if preview else "No content provided."
+        payload: Dict[str, Any] = {
+            "provider": "deepseek-stub",
+            "score": 8.5,
+            "summary": (
+                "Stubbed AI feedback for development. Configure DEEPSEEK_API_KEY for real reviews."
+            ),
+            "issues": [
+                {
+                    "severity": "medium",
+                    "category": "style",
+                    "description": "Walk through demo credentials and replace them in production.",
+                    "recommendation": "Set real provider keys in backend/.env before deploying.",
+                }
+            ],
+            "securityConcerns": [
+                "Avoid committing real secrets; use environment variables instead."
+            ],
+            "performanceRecommendations": [
+                "Use dependency injection to share clients across requests for better reuse.",
+            ],
+            "additionalSuggestions": [
+                f"Snippet preview: {summary_snippet}",
+            ],
+            "improvedCode": submission.get("content", ""),
+        }
+        return ProviderResponse(provider="deepseek-stub", payload=payload)
+
     async def aclose(self) -> None:
         await self.client.aclose()
 
@@ -74,3 +130,9 @@ class AIReviewService:
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> Optional[bool]:
         await self.aclose()
         return None
+
+
+def _is_retryable_exception(exc: BaseException) -> bool:
+    if isinstance(exc, HTTPStatusError) and exc.response.status_code in {401, 403}:
+        return False
+    return True

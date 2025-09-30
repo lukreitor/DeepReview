@@ -8,6 +8,7 @@ services:
       dockerfile: infra/docker/backend.Dockerfile
     env_file:
       - backend/.env.example
+      - backend/.env
     environment:
       MONGODB_URI: mongodb://mongo:27017/deepreview
       REDIS_URL: redis://redis:6379/0
@@ -24,6 +25,7 @@ services:
       dockerfile: infra/docker/worker.Dockerfile
     env_file:
       - backend/.env.example
+      - backend/.env
     environment:
       MONGODB_URI: mongodb://mongo:27017/deepreview
       REDIS_URL: redis://redis:6379/0

@@ -5,14 +5,35 @@ import asyncio
 import json
 from datetime import datetime
 
-from celery import shared_task
-
+from app.core.celery_app import celery_app
 from app.models import Submission, SubmissionStatus
 from app.services.ai import AIReviewService
+from app.workers.worker import get_worker_event_loop
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
+
+@celery_app.task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+    name="app.tasks.review.process_review_submission",
+)
 def process_review_submission(self, submission_id: str) -> None:
-    asyncio.run(_process_submission(submission_id))
+    loop = _get_or_create_event_loop()
+    loop.run_until_complete(_process_submission(submission_id))
+
+
+def _get_or_create_event_loop() -> asyncio.AbstractEventLoop:
+    loop = None
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and not loop.is_closed():
+        return loop
+
+    return get_worker_event_loop()
 
 
 async def _process_submission(submission_id: str) -> None:

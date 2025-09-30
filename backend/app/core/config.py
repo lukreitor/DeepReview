@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     mongodb_uri: str = Field(..., alias="MONGODB_URI")
     mongodb_db: str = Field("deepreview", alias="MONGODB_DB")
     redis_url: str = Field("redis://redis:6379/0", alias="REDIS_URL")
+    celery_default_queue: str = Field("reviews", alias="CELERY_DEFAULT_QUEUE")
+    celery_task_always_eager: bool = Field(False, alias="CELERY_TASK_ALWAYS_EAGER")
+    celery_task_eager_propagates: bool = Field(True, alias="CELERY_TASK_EAGER_PROPAGATES")
 
     deepseek_api_key: str = Field(..., alias="DEEPSEEK_API_KEY")
     deepseek_base_url: AnyHttpUrl = Field("https://api.deepseek.com/v1", alias="DEEPSEEK_BASE_URL")

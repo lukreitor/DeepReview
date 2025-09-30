@@ -6,6 +6,7 @@ import io
 from datetime import datetime
 from typing import Any
 
+from beanie import PydanticObjectId
 from beanie.operators import In
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
@@ -14,6 +15,7 @@ from pydantic import BaseModel
 
 from app.models import Review, Submission, SubmissionCreate, SubmissionStatus, User
 from app.services import review_service
+from app.services.review_service import ReviewQueueUnavailableError
 from app.services.analytics import AnalyticsService
 from app.services.auth import get_current_active_user
 from app.services.rate_limit import rate_limiter
@@ -48,7 +50,13 @@ async def create_review(
 
     cached = submission_doc.status == SubmissionStatus.CACHED
     if not cached:
-        await review_service.enqueue_review(submission_doc)
+        try:
+            await review_service.enqueue_review(submission_doc)
+        except ReviewQueueUnavailableError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Review queue is unavailable. Try again shortly.",
+            ) from exc
 
     return SubmissionQueuedResponse(
         id=str(submission_doc.id),
@@ -70,19 +78,22 @@ async def list_reviews(
     to_date: datetime | None = Query(None, alias="to"),
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, object]:
-    criteria = Submission.user_id == str(current_user.id)
+    criteria: dict[str, Any] = {"user_id": str(current_user.id)}
     if language:
-        criteria = criteria & (Submission.language == language)
+        criteria["language"] = language
     if status_filter:
         try:
             status_enum = SubmissionStatus(status_filter)
         except ValueError as exc:  # pragma: no cover - validation
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status filter") from exc
-        criteria = criteria & (Submission.status == status_enum)
+        criteria["status"] = status_enum
+    created_at_filter: dict[str, Any] = {}
     if from_date:
-        criteria = criteria & (Submission.created_at >= from_date)
+        created_at_filter["$gte"] = from_date
     if to_date:
-        criteria = criteria & (Submission.created_at <= to_date)
+        created_at_filter["$lte"] = to_date
+    if created_at_filter:
+        criteria["created_at"] = created_at_filter
 
     total = await Submission.find(criteria).count()
     submissions = (
@@ -97,8 +108,9 @@ async def list_reviews(
     submission_ids = [str(sub.id) for sub in submissions]
     reviews: list[Review] = []
     if submission_ids:
-        reviews = await Review.find(
-            (Review.user_id == str(current_user.id)) & In(Review.submission_id, submission_ids)
+        reviews = await Review.find_many(
+            Review.user_id == str(current_user.id),
+            In(Review.submission_id, submission_ids),
         ).to_list()
     review_by_submission = {review.submission_id: review for review in reviews}
 
@@ -130,13 +142,15 @@ async def list_reviews(
         "failed": len([item for item in filtered_items if item["submission"].status == SubmissionStatus.FAILED]),
     }
 
+    encoder_overrides = {PydanticObjectId: str}
+
     return {
-        "items": jsonable_encoder(filtered_items),
+        "items": jsonable_encoder(filtered_items, custom_encoder=encoder_overrides),
         "page": page,
         "pageSize": page_size,
         "total": total,
         "filteredTotal": len(filtered_items),
-        "summary": summary,
+        "summary": jsonable_encoder(summary, custom_encoder=encoder_overrides),
     }
 
 
@@ -149,26 +163,30 @@ async def export_reviews(
     from_date: datetime | None = Query(None, alias="from"),
     to_date: datetime | None = Query(None, alias="to"),
 ) -> StreamingResponse:
-    criteria = Submission.user_id == str(current_user.id)
+    criteria: dict[str, Any] = {"user_id": str(current_user.id)}
     if language:
-        criteria = criteria & (Submission.language == language)
+        criteria["language"] = language
     if status_filter:
         try:
             status_enum = SubmissionStatus(status_filter)
         except ValueError as exc:  # pragma: no cover - validation
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status filter") from exc
-        criteria = criteria & (Submission.status == status_enum)
+        criteria["status"] = status_enum
+    created_at_filter: dict[str, Any] = {}
     if from_date:
-        criteria = criteria & (Submission.created_at >= from_date)
+        created_at_filter["$gte"] = from_date
     if to_date:
-        criteria = criteria & (Submission.created_at <= to_date)
+        created_at_filter["$lte"] = to_date
+    if created_at_filter:
+        criteria["created_at"] = created_at_filter
 
     submissions = await Submission.find(criteria).sort(-Submission.created_at).to_list()
     submission_ids = [str(sub.id) for sub in submissions]
     reviews: list[Review] = []
     if submission_ids:
-        reviews = await Review.find(
-            (Review.user_id == str(current_user.id)) & In(Review.submission_id, submission_ids)
+        reviews = await Review.find_many(
+            Review.user_id == str(current_user.id),
+            In(Review.submission_id, submission_ids),
         ).to_list()
     review_by_submission = {review.submission_id: review for review in reviews}
 
@@ -240,13 +258,16 @@ async def get_review(
     )
 
     status_value = submission.status.value if isinstance(submission.status, SubmissionStatus) else submission.status
+    encoder_overrides = {PydanticObjectId: str}
+
     return jsonable_encoder(
         {
             "id": str(submission.id),
             "status": status_value,
             "submission": submission,
             "review": review,
-        }
+        },
+        custom_encoder=encoder_overrides,
     )
 
 

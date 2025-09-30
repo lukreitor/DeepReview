@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr, constr
+from beanie import PydanticObjectId
+from pydantic import BaseModel, EmailStr, constr, field_validator
 
 from app.models import User
 from app.services.auth import (
@@ -36,6 +37,13 @@ class UserRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def _coerce_object_id(cls, value: object) -> str:
+        if isinstance(value, PydanticObjectId):
+            return str(value)
+        return str(value)
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -73,7 +81,12 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> TokenRespon
 
 @router.get("/me", response_model=UserRead)
 async def read_me(current_user: User = Depends(get_current_active_user)) -> UserRead:
-    return UserRead.model_validate(current_user)
+    return UserRead(
+        id=str(current_user.id),
+        email=current_user.email,
+        full_name=current_user.full_name,
+        is_active=current_user.is_active,
+    )
 
 
 # Allow optional trailing slashes to avoid cross-origin redirect issues.

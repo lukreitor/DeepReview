@@ -1,0 +1,331 @@
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/messaging.py:190 in publish                        │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │   187 │   │   if retry:                                                                          │
+2025-09-30 04:47:51 │   188 │   │   │   self.connection.transport_options.update(retry_policy)                         │
+2025-09-30 04:47:51 │   189 │   │   │   _publish = self.connection.ensure(self, _publish, **retry_policy)              │
+2025-09-30 04:47:51 │ ❱ 190 │   │   return _publish(                                                                   │
+2025-09-30 04:47:51 │   191 │   │   │   body, priority, content_type, content_encoding,                                │
+2025-09-30 04:47:51 │   192 │   │   │   headers, properties, routing_key, mandatory, immediate,                        │
+2025-09-30 04:47:51 │   193 │   │   │   exchange_name, declare, timeout, confirm_timeout, retry, retry_policy          │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭─────────────────────────────────────────── locals ───────────────────────────────────────────╮ │
+2025-09-30 04:47:51 │ │             body = '[["68db8b20a1a4819aadcfc938"], {}, {"callbacks": null, "errbacks": null, │ │
+2025-09-30 04:47:51 │ │                    "chain"'+23                                                               │ │
+2025-09-30 04:47:51 │ │      compression = None                                                                      │ │
+2025-09-30 04:47:51 │ │  confirm_timeout = None                                                                      │ │
+2025-09-30 04:47:51 │ │ content_encoding = 'utf-8'                                                                   │ │
+2025-09-30 04:47:51 │ │     content_type = 'application/json'                                                        │ │
+2025-09-30 04:47:51 │ │          declare = [<unbound Queue celery -> <unbound Exchange celery(direct)> -> celery>]   │ │
+2025-09-30 04:47:51 │ │    delivery_mode = 2                                                                         │ │
+2025-09-30 04:47:51 │ │         exchange = ''                                                                        │ │
+2025-09-30 04:47:51 │ │    exchange_name = ''                                                                        │ │
+2025-09-30 04:47:51 │ │       expiration = None                                                                      │ │
+2025-09-30 04:47:51 │ │          headers = {                                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'lang': 'py',                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'task': 'app.tasks.review.process_review_submission',                 │ │
+2025-09-30 04:47:51 │ │                    │   'id': 'e75971a1-4231-485f-937a-f935b3ce6d1f',                         │ │
+2025-09-30 04:47:51 │ │                    │   'shadow': None,                                                       │ │
+2025-09-30 04:47:51 │ │                    │   'eta': None,                                                          │ │
+2025-09-30 04:47:51 │ │                    │   'expires': None,                                                      │ │
+2025-09-30 04:47:51 │ │                    │   'group': None,                                                        │ │
+2025-09-30 04:47:51 │ │                    │   'group_index': None,                                                  │ │
+2025-09-30 04:47:51 │ │                    │   'retries': 0,                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'timelimit': [None, None],                                            │ │
+2025-09-30 04:47:51 │ │                    │   ... +9                                                                │ │
+2025-09-30 04:47:51 │ │                    }                                                                         │ │
+2025-09-30 04:47:51 │ │        immediate = False                                                                     │ │
+2025-09-30 04:47:51 │ │        mandatory = False                                                                     │ │
+2025-09-30 04:47:51 │ │         priority = 0                                                                         │ │
+2025-09-30 04:47:51 │ │       properties = {                                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'correlation_id': 'e75971a1-4231-485f-937a-f935b3ce6d1f',             │ │
+2025-09-30 04:47:51 │ │                    │   'reply_to': 'e9247527-9386-30d3-a01b-16a62a9214f6',                   │ │
+2025-09-30 04:47:51 │ │                    │   'delivery_mode': 2                                                    │ │
+2025-09-30 04:47:51 │ │                    }                                                                         │ │
+2025-09-30 04:47:51 │ │            retry = True                                                                      │ │
+2025-09-30 04:47:51 │ │     retry_policy = {                                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'max_retries': 3,                                                     │ │
+2025-09-30 04:47:51 │ │                    │   'interval_start': 0,                                                  │ │
+2025-09-30 04:47:51 │ │                    │   'interval_max': 1,                                                    │ │
+2025-09-30 04:47:51 │ │                    │   'interval_step': 0.2                                                  │ │
+2025-09-30 04:47:51 │ │                    }                                                                         │ │
+2025-09-30 04:47:51 │ │      routing_key = 'celery'                                                                  │ │
+2025-09-30 04:47:51 │ │             self = <Producer: None>                                                          │ │
+2025-09-30 04:47:51 │ │       serializer = 'json'                                                                    │ │
+2025-09-30 04:47:51 │ │          timeout = None                                                                      │ │
+2025-09-30 04:47:51 │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/connection.py:556 in _ensured                      │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │    553 │   │   │   with self._reraise_as_library_errors():                                       │
+2025-09-30 04:47:51 │    554 │   │   │   │   for retries in count(0):  # for infinity                                  │
+2025-09-30 04:47:51 │    555 │   │   │   │   │   try:                                                                  │
+2025-09-30 04:47:51 │ ❱  556 │   │   │   │   │   │   return fun(*args, **kwargs)                                       │
+2025-09-30 04:47:51 │    557 │   │   │   │   │   except retry_errors as exc:                                           │
+2025-09-30 04:47:51 │    558 │   │   │   │   │   │   if max_retries is not None and retries >= max_retries:            │
+2025-09-30 04:47:51 │    559 │   │   │   │   │   │   │   raise                                                         │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭─────────────────────────────────────────── locals ───────────────────────────────────────────╮ │
+2025-09-30 04:47:51 │ │              args = (                                                                        │ │
+2025-09-30 04:47:51 │ │                     │   '[["68db8b20a1a4819aadcfc938"], {}, {"callbacks": null, "errbacks":  │ │
+2025-09-30 04:47:51 │ │                     null, "chain"'+23,                                                       │ │
+2025-09-30 04:47:51 │ │                     │   0,                                                                   │ │
+2025-09-30 04:47:51 │ │                     │   'application/json',                                                  │ │
+2025-09-30 04:47:51 │ │                     │   'utf-8',                                                             │ │
+2025-09-30 04:47:51 │ │                     │   {                                                                    │ │
+2025-09-30 04:47:51 │ │                     │   │   'lang': 'py',                                                    │ │
+2025-09-30 04:47:51 │ │                     │   │   'task': 'app.tasks.review.process_review_submission',            │ │
+2025-09-30 04:47:51 │ │                     │   │   'id': 'e75971a1-4231-485f-937a-f935b3ce6d1f',                    │ │
+2025-09-30 04:47:51 │ │                     │   │   'shadow': None,                                                  │ │
+2025-09-30 04:47:51 │ │                     │   │   'eta': None,                                                     │ │
+2025-09-30 04:47:51 │ │                     │   │   'expires': None,                                                 │ │
+2025-09-30 04:47:51 │ │                     │   │   'group': None,                                                   │ │
+2025-09-30 04:47:51 │ │                     │   │   'group_index': None,                                             │ │
+2025-09-30 04:47:51 │ │                     │   │   'retries': 0,                                                    │ │
+2025-09-30 04:47:51 │ │                     │   │   'timelimit': [None, None],                                       │ │
+2025-09-30 04:47:51 │ │                     │   │   ... +9                                                           │ │
+2025-09-30 04:47:51 │ │                     │   },                                                                   │ │
+2025-09-30 04:47:51 │ │                     │   {                                                                    │ │
+2025-09-30 04:47:51 │ │                     │   │   'correlation_id': 'e75971a1-4231-485f-937a-f935b3ce6d1f',        │ │
+2025-09-30 04:47:51 │ │                     │   │   'reply_to': 'e9247527-9386-30d3-a01b-16a62a9214f6',              │ │
+2025-09-30 04:47:51 │ │                     │   │   'delivery_mode': 2                                               │ │
+2025-09-30 04:47:51 │ │                     │   },                                                                   │ │
+2025-09-30 04:47:51 │ │                     │   'celery',                                                            │ │
+2025-09-30 04:47:51 │ │                     │   False,                                                               │ │
+2025-09-30 04:47:51 │ │                     │   False,                                                               │ │
+2025-09-30 04:47:51 │ │                     │   '',                                                                  │ │
+2025-09-30 04:47:51 │ │                     │   ... +5                                                               │ │
+2025-09-30 04:47:51 │ │                     )                                                                        │ │
+2025-09-30 04:47:51 │ │       chan_errors = (<class 'amqp.exceptions.RecoverableChannelError'>,)                     │ │
+2025-09-30 04:47:51 │ │       conn_errors = (                                                                        │ │
+2025-09-30 04:47:51 │ │                     │   <class 'amqp.exceptions.RecoverableConnectionError'>,                │ │
+2025-09-30 04:47:51 │ │                     │   <class 'amqp.exceptions.MessageNacked'>,                             │ │
+2025-09-30 04:47:51 │ │                     │   <class 'OSError'>,                                                   │ │
+2025-09-30 04:47:51 │ │                     │   <class 'OSError'>,                                                   │ │
+2025-09-30 04:47:51 │ │                     │   <class 'OSError'>                                                    │ │
+2025-09-30 04:47:51 │ │                     )                                                                        │ │
+2025-09-30 04:47:51 │ │           errback = None                                                                     │ │
+2025-09-30 04:47:51 │ │               fun = <bound method Producer._publish of <Producer: None>>                     │ │
+2025-09-30 04:47:51 │ │    got_connection = 0                                                                        │ │
+2025-09-30 04:47:51 │ │ has_modern_errors = True                                                                     │ │
+2025-09-30 04:47:51 │ │      interval_max = 1                                                                        │ │
+2025-09-30 04:47:51 │ │    interval_start = 0                                                                        │ │
+2025-09-30 04:47:51 │ │     interval_step = 0.2                                                                      │ │
+2025-09-30 04:47:51 │ │            kwargs = {}                                                                       │ │
+2025-09-30 04:47:51 │ │       max_retries = 3                                                                        │ │
+2025-09-30 04:47:51 │ │               obj = <Producer: None>                                                         │ │
+2025-09-30 04:47:51 │ │         on_revive = None                                                                     │ │
+2025-09-30 04:47:51 │ │           retries = 0                                                                        │ │
+2025-09-30 04:47:51 │ │      retry_errors = ()                                                                       │ │
+2025-09-30 04:47:51 │ │              self = <Connection: amqp://guest:**@127.0.0.1:5672// at 0x7f2384403290>         │ │
+2025-09-30 04:47:51 │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/messaging.py:200 in _publish                       │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │   197 │   │   │   │    headers, properties, routing_key, mandatory,                              │
+2025-09-30 04:47:51 │   198 │   │   │   │    immediate, exchange, declare, timeout=None, confirm_timeout=None, retry   │
+2025-09-30 04:47:51 │   199 │   │   retry_policy = {} if retry_policy is None else retry_policy                        │
+2025-09-30 04:47:51 │ ❱ 200 │   │   channel = self.channel                                                             │
+2025-09-30 04:47:51 │   201 │   │   message = channel.prepare_message(                                                 │
+2025-09-30 04:47:51 │   202 │   │   │   body, priority, content_type,                                                  │
+2025-09-30 04:47:51 │   203 │   │   │   content_encoding, headers, properties,                                         │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭─────────────────────────────────────────── locals ───────────────────────────────────────────╮ │
+2025-09-30 04:47:51 │ │             body = '[["68db8b20a1a4819aadcfc938"], {}, {"callbacks": null, "errbacks": null, │ │
+2025-09-30 04:47:51 │ │                    "chain"'+23                                                               │ │
+2025-09-30 04:47:51 │ │  confirm_timeout = None                                                                      │ │
+2025-09-30 04:47:51 │ │ content_encoding = 'utf-8'                                                                   │ │
+2025-09-30 04:47:51 │ │     content_type = 'application/json'                                                        │ │
+2025-09-30 04:47:51 │ │          declare = [<unbound Queue celery -> <unbound Exchange celery(direct)> -> celery>]   │ │
+2025-09-30 04:47:51 │ │         exchange = ''                                                                        │ │
+2025-09-30 04:47:51 │ │          headers = {                                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'lang': 'py',                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'task': 'app.tasks.review.process_review_submission',                 │ │
+2025-09-30 04:47:51 │ │                    │   'id': 'e75971a1-4231-485f-937a-f935b3ce6d1f',                         │ │
+2025-09-30 04:47:51 │ │                    │   'shadow': None,                                                       │ │
+2025-09-30 04:47:51 │ │                    │   'eta': None,                                                          │ │
+2025-09-30 04:47:51 │ │                    │   'expires': None,                                                      │ │
+2025-09-30 04:47:51 │ │                    │   'group': None,                                                        │ │
+2025-09-30 04:47:51 │ │                    │   'group_index': None,                                                  │ │
+2025-09-30 04:47:51 │ │                    │   'retries': 0,                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'timelimit': [None, None],                                            │ │
+2025-09-30 04:47:51 │ │                    │   ... +9                                                                │ │
+2025-09-30 04:47:51 │ │                    }                                                                         │ │
+2025-09-30 04:47:51 │ │        immediate = False                                                                     │ │
+2025-09-30 04:47:51 │ │        mandatory = False                                                                     │ │
+2025-09-30 04:47:51 │ │         priority = 0                                                                         │ │
+2025-09-30 04:47:51 │ │       properties = {                                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'correlation_id': 'e75971a1-4231-485f-937a-f935b3ce6d1f',             │ │
+2025-09-30 04:47:51 │ │                    │   'reply_to': 'e9247527-9386-30d3-a01b-16a62a9214f6',                   │ │
+2025-09-30 04:47:51 │ │                    │   'delivery_mode': 2                                                    │ │
+2025-09-30 04:47:51 │ │                    }                                                                         │ │
+2025-09-30 04:47:51 │ │            retry = True                                                                      │ │
+2025-09-30 04:47:51 │ │     retry_policy = {                                                                         │ │
+2025-09-30 04:47:51 │ │                    │   'max_retries': 3,                                                     │ │
+2025-09-30 04:47:51 │ │                    │   'interval_start': 0,                                                  │ │
+2025-09-30 04:47:51 │ │                    │   'interval_max': 1,                                                    │ │
+2025-09-30 04:47:51 │ │                    │   'interval_step': 0.2                                                  │ │
+2025-09-30 04:47:51 │ │                    }                                                                         │ │
+2025-09-30 04:47:51 │ │      routing_key = 'celery'                                                                  │ │
+2025-09-30 04:47:51 │ │             self = <Producer: None>                                                          │ │
+2025-09-30 04:47:51 │ │          timeout = None                                                                      │ │
+2025-09-30 04:47:51 │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/messaging.py:224 in _get_channel                   │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │   221 │   def _get_channel(self):                                                                │
+2025-09-30 04:47:51 │   222 │   │   channel = self._channel                                                            │
+2025-09-30 04:47:51 │   223 │   │   if isinstance(channel, ChannelPromise):                                            │
+2025-09-30 04:47:51 │ ❱ 224 │   │   │   channel = self._channel = channel()                                            │
+2025-09-30 04:47:51 │   225 │   │   │   self.exchange.revive(channel)                                                  │
+2025-09-30 04:47:51 │   226 │   │   │   if self.on_return:                                                             │
+2025-09-30 04:47:51 │   227 │   │   │   │   channel.events['basic_return'].add(self.on_return)                         │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭────────────── locals ───────────────╮                                                          │
+2025-09-30 04:47:51 │ │ channel = <promise: 0x7f23842bf740> │                                                          │
+2025-09-30 04:47:51 │ │    self = <Producer: None>          │                                                          │
+2025-09-30 04:47:51 │ ╰─────────────────────────────────────╯                                                          │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/utils/functional.py:34 in __call__                 │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │    31 │   │   try:                                                                               │
+2025-09-30 04:47:51 │    32 │   │   │   return self.__value__                                                          │
+2025-09-30 04:47:51 │    33 │   │   except AttributeError:                                                             │
+2025-09-30 04:47:51 │ ❱  34 │   │   │   value = self.__value__ = self.__contract__()                                   │
+2025-09-30 04:47:51 │    35 │   │   │   return value                                                                   │
+2025-09-30 04:47:51 │    36 │                                                                                          │
+2025-09-30 04:47:51 │    37 │   def __repr__(self):                                                                    │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭───────────── locals ─────────────╮                                                             │
+2025-09-30 04:47:51 │ │ self = <promise: 0x7f23842bf740> │                                                             │
+2025-09-30 04:47:51 │ ╰──────────────────────────────────╯                                                             │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/messaging.py:240 in <lambda>                       │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │   237 │   │   if is_connection(channel):                                                         │
+2025-09-30 04:47:51 │   238 │   │   │   connection = channel                                                           │
+2025-09-30 04:47:51 │   239 │   │   │   self.__connection__ = connection                                               │
+2025-09-30 04:47:51 │ ❱ 240 │   │   │   channel = ChannelPromise(lambda: connection.default_channel)                   │
+2025-09-30 04:47:51 │   241 │   │   if isinstance(channel, ChannelPromise):                                            │
+2025-09-30 04:47:51 │   242 │   │   │   self._channel = channel                                                        │
+2025-09-30 04:47:51 │   243 │   │   │   self.exchange = self.exchange(channel)                                         │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭─────────────────────────────────── locals ────────────────────────────────────╮                │
+2025-09-30 04:47:51 │ │ connection = <Connection: amqp://guest:**@127.0.0.1:5672// at 0x7f2384403290> │                │
+2025-09-30 04:47:51 │ ╰───────────────────────────────────────────────────────────────────────────────╯                │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/connection.py:957 in default_channel               │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │    954 │   │   """                                                                               │
+2025-09-30 04:47:51 │    955 │   │   # make sure we're still connected, and if not refresh.                            │
+2025-09-30 04:47:51 │    956 │   │   conn_opts = self._extract_failover_opts()                                         │
+2025-09-30 04:47:51 │ ❱  957 │   │   self._ensure_connection(**conn_opts)                                              │
+2025-09-30 04:47:51 │    958 │   │                                                                                     │
+2025-09-30 04:47:51 │    959 │   │   if self._default_channel is None:                                                 │
+2025-09-30 04:47:51 │    960 │   │   │   self._default_channel = self.channel()                                        │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭─────────────────────────────────── locals ───────────────────────────────────╮                 │
+2025-09-30 04:47:51 │ │ conn_opts = {                                                                │                 │
+2025-09-30 04:47:51 │ │             │   'timeout': 4,                                                │                 │
+2025-09-30 04:47:51 │ │             │   'max_retries': 3,                                            │                 │
+2025-09-30 04:47:51 │ │             │   'interval_start': 0,                                         │                 │
+2025-09-30 04:47:51 │ │             │   'interval_step': 0.2,                                        │                 │
+2025-09-30 04:47:51 │ │             │   'interval_max': 1                                            │                 │
+2025-09-30 04:47:51 │ │             }                                                                │                 │
+2025-09-30 04:47:51 │ │      self = <Connection: amqp://guest:**@127.0.0.1:5672// at 0x7f2384403290> │                 │
+2025-09-30 04:47:51 │ ╰──────────────────────────────────────────────────────────────────────────────╯                 │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/connection.py:458 in _ensure_connection            │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │    455 │   │   ctx = self._reraise_as_library_errors                                             │
+2025-09-30 04:47:51 │    456 │   │   if not reraise_as_library_errors:                                                 │
+2025-09-30 04:47:51 │    457 │   │   │   ctx = self._dummy_context                                                     │
+2025-09-30 04:47:51 │ ❱  458 │   │   with ctx():                                                                       │
+2025-09-30 04:47:51 │    459 │   │   │   return retry_over_time(                                                       │
+2025-09-30 04:47:51 │    460 │   │   │   │   self._connection_factory, self.recoverable_connection_errors,             │
+2025-09-30 04:47:51 │    461 │   │   │   │   (), {}, on_error, max_retries,                                            │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭─────────────────────────────────────────── locals ───────────────────────────────────────────╮ │
+2025-09-30 04:47:51 │ │                  callback = None                                                             │ │
+2025-09-30 04:47:51 │ │                       ctx = <bound method Connection._reraise_as_library_errors of           │ │
+2025-09-30 04:47:51 │ │                             <Connection: amqp://guest:**@127.0.0.1:5672// at                 │ │
+2025-09-30 04:47:51 │ │                             0x7f2384403290>>                                                 │ │
+2025-09-30 04:47:51 │ │                   errback = None                                                             │ │
+2025-09-30 04:47:51 │ │              interval_max = 1                                                                │ │
+2025-09-30 04:47:51 │ │            interval_start = 0                                                                │ │
+2025-09-30 04:47:51 │ │             interval_step = 0.2                                                              │ │
+2025-09-30 04:47:51 │ │               max_retries = 3                                                                │ │
+2025-09-30 04:47:51 │ │ reraise_as_library_errors = True                                                             │ │
+2025-09-30 04:47:51 │ │                      self = <Connection: amqp://guest:**@127.0.0.1:5672// at 0x7f2384403290> │ │
+2025-09-30 04:47:51 │ │                   timeout = 4                                                                │ │
+2025-09-30 04:47:51 │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/contextlib.py:158 in __exit__                                          │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │   155 │   │   │   │   # tell if we get the same exception back                                   │
+2025-09-30 04:47:51 │   156 │   │   │   │   value = typ()                                                              │
+2025-09-30 04:47:51 │   157 │   │   │   try:                                                                           │
+2025-09-30 04:47:51 │ ❱ 158 │   │   │   │   self.gen.throw(typ, value, traceback)                                      │
+2025-09-30 04:47:51 │   159 │   │   │   except StopIteration as exc:                                                   │
+2025-09-30 04:47:51 │   160 │   │   │   │   # Suppress StopIteration *unless* it's the same exception that             │
+2025-09-30 04:47:51 │   161 │   │   │   │   # was passed to throw().  This prevents a StopIteration                    │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭────────────────────────────────── locals ──────────────────────────────────╮                   │
+2025-09-30 04:47:51 │ │      self = <contextlib._GeneratorContextManager object at 0x7f23842ed610> │                   │
+2025-09-30 04:47:51 │ │ traceback = <traceback object at 0x7f23842ed6c0>                           │                   │
+2025-09-30 04:47:51 │ │     value = ConnectionRefusedError(111, 'Connection refused')              │                   │
+2025-09-30 04:47:51 │ ╰────────────────────────────────────────────────────────────────────────────╯                   │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ /usr/local/lib/python3.11/site-packages/kombu/connection.py:476 in _reraise_as_library_errors    │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │    473 │   │   except (ConnectionError, ChannelError):                                           │
+2025-09-30 04:47:51 │    474 │   │   │   raise                                                                         │
+2025-09-30 04:47:51 │    475 │   │   except self.recoverable_connection_errors as exc:                                 │
+2025-09-30 04:47:51 │ ❱  476 │   │   │   raise ConnectionError(str(exc)) from exc                                      │
+2025-09-30 04:47:51 │    477 │   │   except self.recoverable_channel_errors as exc:                                    │
+2025-09-30 04:47:51 │    478 │   │   │   raise ChannelError(str(exc)) from exc                                         │
+2025-09-30 04:47:51 │    479                                                                                           │
+2025-09-30 04:47:51 │                                                                                                  │
+2025-09-30 04:47:51 │ ╭──────────────────────────────── locals ─────────────────────────────────╮                      │
+2025-09-30 04:47:51 │ │ self = <Connection: amqp://guest:**@127.0.0.1:5672// at 0x7f2384403290> │                      │
+2025-09-30 04:47:51 │ ╰─────────────────────────────────────────────────────────────────────────╯                      │
+2025-09-30 04:47:51 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+2025-09-30 04:47:51 OperationalError: [Errno 111] Connection refused
+2025-09-30 04:47:51 
+2025-09-30 15:01:38 Skipping virtualenv creation, as specified in config file.
+2025-09-30 15:01:46 2025-09-30T18:01:46.279195Z [info     ] Started server process [1]
+2025-09-30 15:01:46 2025-09-30T18:01:46.279404Z [info     ] Waiting for application startup.
+2025-09-30 15:01:46 2025-09-30 18:01:46.316 | DEBUG    | app.services.bootstrap:ensure_demo_user:23 - Demo user already present with id=%s
+2025-09-30 15:01:46 2025-09-30T18:01:46.316892Z [info     ] Application startup complete.
+2025-09-30 15:01:46 2025-09-30T18:01:46.319766Z [info     ] Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2025-09-30 15:02:45 2025-09-30T18:02:45.548894Z [info     ] ('172.24.0.1', 58966) - "WebSocket /ws/reviews?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGRiNjQ3MmJlM2Y1OTM3ZjZmMTFmN2IiLCJleHAiOjE3NTkyMTg3MzB9.aoLvvyU3U-bhJ-Rk29zK33TSpqkfYXD_7AAOnuIeHjE" 403
+2025-09-30 15:02:45 2025-09-30T18:02:45.554209Z [info     ] connection rejected (403 Forbidden)
+2025-09-30 15:02:45 2025-09-30T18:02:45.555490Z [info     ] connection closed
+2025-09-30 15:02:45 2025-09-30T18:02:45.674625Z [info     ] ('172.24.0.1', 58982) - "WebSocket /ws/reviews?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGRiNjQ3MmJlM2Y1OTM3ZjZmMTFmN2IiLCJleHAiOjE3NTkyMTg3MzB9.aoLvvyU3U-bhJ-Rk29zK33TSpqkfYXD_7AAOnuIeHjE" 403
+2025-09-30 15:02:45 2025-09-30T18:02:45.675391Z [info     ] connection rejected (403 Forbidden)
+2025-09-30 15:02:45 2025-09-30T18:02:45.676307Z [info     ] connection closed
+2025-09-30 15:03:17 2025-09-30T18:03:17.111309Z [info     ] 172.24.0.1:55612 - "GET /docs HTTP/1.1" 200
+2025-09-30 15:03:19 2025-09-30T18:03:19.854946Z [info     ] 172.24.0.1:55612 - "GET /openapi.json HTTP/1.1" 200
+2025-09-30 15:03:28 2025-09-30T18:03:28.362932Z [info     ] ('172.24.0.1', 59394) - "WebSocket /ws/reviews?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGRiNjQ3MmJlM2Y1OTM3ZjZmMTFmN2IiLCJleHAiOjE3NTkyMTg3MzB9.aoLvvyU3U-bhJ-Rk29zK33TSpqkfYXD_7AAOnuIeHjE" 403
+2025-09-30 15:03:28 2025-09-30T18:03:28.363854Z [info     ] connection rejected (403 Forbidden)
+2025-09-30 15:03:28 2025-09-30T18:03:28.365022Z [info     ] connection closed
+2025-09-30 15:03:28 2025-09-30T18:03:28.416551Z [info     ] ('172.24.0.1', 59398) - "WebSocket /ws/reviews?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGRiNjQ3MmJlM2Y1OTM3ZjZmMTFmN2IiLCJleHAiOjE3NTkyMTg3MzB9.aoLvvyU3U-bhJ-Rk29zK33TSpqkfYXD_7AAOnuIeHjE" 403
+2025-09-30 15:03:28 2025-09-30T18:03:28.417322Z [info     ] connection rejected (403 Forbidden)
+2025-09-30 15:03:28 2025-09-30T18:03:28.418481Z [info     ] connection closed
+2025-09-30 15:03:30 2025-09-30T18:03:30.949821Z [info     ] ('172.24.0.1', 59062) - "WebSocket /ws/reviews?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGRiNjQ3MmJlM2Y1OTM3ZjZmMTFmN2IiLCJleHAiOjE3NTkyMTg3MzB9.aoLvvyU3U-bhJ-Rk29zK33TSpqkfYXD_7AAOnuIeHjE" 403
+2025-09-30 15:03:30 2025-09-30T18:03:30.950626Z [info     ] connection rejected (403 Forbidden)
+2025-09-30 15:03:30 2025-09-30T18:03:30.951567Z [info     ] connection closed
+2025-09-30 15:03:31 2025-09-30T18:03:31.084916Z [info     ] ('172.24.0.1', 59078) - "WebSocket /ws/reviews?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGRiNjQ3MmJlM2Y1OTM3ZjZmMTFmN2IiLCJleHAiOjE3NTkyMTg3MzB9.aoLvvyU3U-bhJ-Rk29zK33TSpqkfYXD_7AAOnuIeHjE" 403
+2025-09-30 15:03:31 2025-09-30T18:03:31.085544Z [info     ] connection rejected (403 Forbidden)
+2025-09-30 15:03:31 2025-09-30T18:03:31.086597Z [info     ] connection closed
+2025-09-30 15:03:36 2025-09-30T18:03:36.315482Z [info     ] ('172.24.0.1', 59080) - "WebSocket /ws/reviews?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGRiNjQ3MmJlM2Y1OTM3ZjZmMTFmN2IiLCJleHAiOjE3NTkyMTg3MzB9.aoLvvyU3U-bhJ-Rk29zK33TSpqkfYXD_7AAOnuIeHjE" 403
+2025-09-30 15:03:36 2025-09-30T18:03:36.316308Z [info     ] connection rejected (403 Forbidden)
+2025-09-30 15:03:36 2025-09-30T18:03:36.317405Z [info     ] connection closed
+2025-09-30 15:03:36 2025-09-30T18:03:36.362201Z [info     ] ('172.24.0.1', 59092) - "WebSocket /ws/reviews?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGRiNjQ3MmJlM2Y1OTM3ZjZmMTFmN2IiLCJleHAiOjE3NTkyMTg3MzB9.aoLvvyU3U-bhJ-Rk29zK33TSpqkfYXD_7AAOnuIeHjE" 403
+2025-09-30 15:03:36 2025-09-30T18:03:36.363077Z [info     ] connection rejected (403 Forbidden)
+2025-09-30 15:03:36 2025-09-30T18:03:36.364271Z [info     ] connection closed
+2025-09-30 15:03:36 2025-09-30T18:03:36.442801Z [info     ] 172.24.0.1:59108 - "OPTIONS /api/reviews HTTP/1.1" 200
+2025-09-30 15:03:36 2025-09-30T18:03:36.469327Z [info     ] 172.24.0.1:59108 - "GET /api/reviews HTTP/1.1" 401
+2025-09-30 15:03:36 2025-09-30T18:03:36.470396Z [info     ] 172.24.0.1:59120 - "OPTIONS /api/reviews/analytics/summary HTTP/1.1" 200
+2025-09-30 15:03:36 2025-09-30T18:03:36.488574Z [info     ] 172.24.0.1:59108 - "GET /api/reviews/analytics/summary HTTP/1.1" 401
+2025-09-30 15:04:21 2025-09-30T18:04:21.482388Z [info     ] 172.24.0.1:41778 - "OPTIONS /api/reviews HTTP/1.1" 200
+2025-09-30 15:04:21 2025-09-30T18:04:21.498313Z [info     ] 172.24.0.1:41778 - "POST /api/reviews HTTP/1.1" 401

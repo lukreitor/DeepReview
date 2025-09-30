@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -49,6 +49,7 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=sorted(derived_origins),
+        allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -58,6 +59,18 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
     app.add_middleware(SlowAPIMiddleware)
     app.include_router(api_router, prefix="/api")
+
+    @app.websocket("/ws/reviews")
+    async def websocket_reviews_root(websocket: WebSocket, token: str = Query(...)) -> None:
+        from app.api.routes.ws import reviews_updates
+
+        await reviews_updates(websocket, token=token)
+
+    @app.websocket("/ws/reviews/")
+    async def websocket_reviews_root_slash(websocket: WebSocket, token: str = Query(...)) -> None:
+        from app.api.routes.ws import reviews_updates
+
+        await reviews_updates(websocket, token=token)
 
     @app.on_event("startup")
     async def on_startup() -> None:

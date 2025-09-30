@@ -405,43 +405,56 @@ const RecentReviews = ({ loading, reviews, summary }: RecentReviewsProps) => (
       {loading && <Text>Loading reviews…</Text>}
       {!loading && !reviews.length && <Text>No reviews found yet.</Text>}
       <Stack spacing={8} divider={<Divider />}>
-        {reviews.map(({ submission, review }) => (
-          <Stack key={submission.id} spacing={3}>
-            <Heading size="sm">
-              {submission.language.toUpperCase()} • #{submission.id.slice(-6)}
-            </Heading>
-            <Text fontSize="sm" color="gray.500">
-              Status: {submission.status}
-            </Text>
-            {review?.summary && <Text>{review.summary}</Text>}
-            {review?.issues?.length ? (
-              <Stack spacing={2}>
-                {review.issues.map((issue, index) => (
-                  <Badge key={`${submission.id}-issue-${index}`} colorScheme="orange">
-                    {issue.severity.toUpperCase()} • {issue.category}: {issue.description}
-                  </Badge>
-                ))}
-              </Stack>
-            ) : (
-              <Text fontSize="sm" color="gray.500">
-                No critical issues highlighted.
-              </Text>
-            )}
-            <Suspense
-              fallback={
-                <Text fontSize="sm" color="gray.400">
-                  Loading diff…
+        {reviews
+          .filter((item) => item?.submission)
+          .map(({ submission, review }) => {
+            const submissionId = String(submission.id ?? '');
+            if (!submissionId) {
+              return null;
+            }
+            const languageLabel = submission.language
+              ? submission.language.toUpperCase()
+              : 'UNKNOWN';
+            const shortId = submissionId.length > 6 ? submissionId.slice(-6) : submissionId;
+
+            return (
+              <Stack key={submissionId} spacing={3}>
+                <Heading size="sm">
+                  {languageLabel} • #{shortId}
+                </Heading>
+                <Text fontSize="sm" color="gray.500">
+                  Status: {submission.status}
                 </Text>
-              }
-            >
-              <ReviewDiff
-                original={submission.content}
-                improved={review?.improved_code}
-                language={submission.language}
-              />
-            </Suspense>
-          </Stack>
-        ))}
+                {review?.summary && <Text>{review.summary}</Text>}
+                {review?.issues?.length ? (
+                  <Stack spacing={2}>
+                    {review.issues.map((issue, index) => (
+                      <Badge key={`${submissionId}-issue-${index}`} colorScheme="orange">
+                        {issue.severity.toUpperCase()} • {issue.category}: {issue.description}
+                      </Badge>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Text fontSize="sm" color="gray.500">
+                    No critical issues highlighted.
+                  </Text>
+                )}
+                <Suspense
+                  fallback={
+                    <Text fontSize="sm" color="gray.400">
+                      Loading diff…
+                    </Text>
+                  }
+                >
+                  <ReviewDiff
+                    original={submission.content}
+                    improved={review?.improved_code}
+                    language={submission.language}
+                  />
+                </Suspense>
+              </Stack>
+            );
+          })}
       </Stack>
     </CardBody>
   </Card>
