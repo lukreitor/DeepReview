@@ -14,6 +14,7 @@ from app.core.config import get_settings
 from app.core.db import init_db
 from app.core.logging import setup_logging
 from app.models import AnalyticsSnapshot, Review, Submission, User
+from app.services.bootstrap import ensure_demo_user
 from app.services.rate_limit import limiter, rate_limit_exception_handler
 
 settings = get_settings()
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def on_startup() -> None:
         await init_db([User, Submission, Review, AnalyticsSnapshot])
+        await ensure_demo_user()
 
     return app
 

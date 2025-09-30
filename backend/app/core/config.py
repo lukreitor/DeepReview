@@ -2,7 +2,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import AnyHttpUrl, Field
+from pydantic import AnyHttpUrl, EmailStr, Field
 from pydantic_settings import BaseSettings
 
 
@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     )
     growthbook_client_key: str | None = Field(None, alias="GROWTHBOOK_CLIENT_KEY")
     posthog_api_key: str | None = Field(None, alias="POSTHOG_API_KEY")
+
+    demo_user_email: EmailStr = Field("demo@deepreview.dev", alias="DEMO_USER_EMAIL")
+    demo_user_password: str = Field("DeepReview!123", alias="DEMO_USER_PASSWORD")
+    demo_user_full_name: str = Field("DeepReview Demo", alias="DEMO_USER_FULL_NAME")
 
     class Config:
         env_file = ".env"

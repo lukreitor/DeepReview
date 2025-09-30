@@ -123,9 +123,15 @@ async def _store_cached_review(submission: Submission, data: dict[str, Any]) -> 
 
 
 async def _publish_update(submission: Submission, data: dict[str, Any], *, cached: bool = False) -> None:
+    status = submission.status
+    if isinstance(status, SubmissionStatus):
+        status_value = status.value
+    else:
+        status_value = status
+
     payload = {
         "submissionId": str(submission.id),
-        "status": submission.status.value,
+        "status": status_value,
         "cached": cached,
         "summary": data.get("summary"),
         "score": data.get("score"),

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, constr
 
 from app.models import User
 from app.services.auth import (
@@ -24,7 +24,7 @@ class TokenResponse(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: constr(min_length=8, max_length=72)  # type: ignore[arg-type]
     full_name: str | None = None
 
 
@@ -44,9 +44,17 @@ async def register_user(payload: UserCreate) -> TokenResponse:
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    try:
+        hashed_password = hash_password(payload.password)
+    except ValueError as exc:  # pragma: no cover - passlib length guard
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at most 72 characters.",
+        ) from exc
+
     user = User(
         email=payload.email,
-        hashed_password=hash_password(payload.password),
+        hashed_password=hashed_password,
         full_name=payload.full_name,
     )
     await user.create()

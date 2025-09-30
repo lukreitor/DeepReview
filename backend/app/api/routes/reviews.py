@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import io
+from datetime import datetime
 from typing import Any
 
 from beanie.operators import In
@@ -65,6 +66,8 @@ async def list_reviews(
     language: str | None = None,
     status_filter: str | None = Query(None, alias="status"),
     min_score: float | None = None,
+    from_date: datetime | None = Query(None, alias="from"),
+    to_date: datetime | None = Query(None, alias="to"),
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, object]:
     criteria = Submission.user_id == str(current_user.id)
@@ -76,6 +79,10 @@ async def list_reviews(
         except ValueError as exc:  # pragma: no cover - validation
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status filter") from exc
         criteria = criteria & (Submission.status == status_enum)
+    if from_date:
+        criteria = criteria & (Submission.created_at >= from_date)
+    if to_date:
+        criteria = criteria & (Submission.created_at <= to_date)
 
     total = await Submission.find(criteria).count()
     submissions = (
@@ -128,6 +135,7 @@ async def list_reviews(
         "page": page,
         "pageSize": page_size,
         "total": total,
+        "filteredTotal": len(filtered_items),
         "summary": summary,
     }
 
@@ -137,6 +145,9 @@ async def export_reviews(
     current_user: User = Depends(get_current_active_user),
     language: str | None = None,
     status_filter: str | None = Query(None, alias="status"),
+    min_score: float | None = None,
+    from_date: datetime | None = Query(None, alias="from"),
+    to_date: datetime | None = Query(None, alias="to"),
 ) -> StreamingResponse:
     criteria = Submission.user_id == str(current_user.id)
     if language:
@@ -147,6 +158,10 @@ async def export_reviews(
         except ValueError as exc:  # pragma: no cover - validation
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status filter") from exc
         criteria = criteria & (Submission.status == status_enum)
+    if from_date:
+        criteria = criteria & (Submission.created_at >= from_date)
+    if to_date:
+        criteria = criteria & (Submission.created_at <= to_date)
 
     submissions = await Submission.find(criteria).sort(-Submission.created_at).to_list()
     submission_ids = [str(sub.id) for sub in submissions]
@@ -174,14 +189,19 @@ async def export_reviews(
     writer.writeheader()
     for submission in submissions:
         review = review_by_submission.get(str(submission.id))
+        if min_score is not None:
+            valid = review is not None and review.score is not None and review.score >= min_score
+            if not valid:
+                continue
         issues_serialised = "; ".join(
             f"{issue.severity}:{issue.category}" for issue in (review.issues if review else [])
         )
+        status_value = submission.status.value if isinstance(submission.status, SubmissionStatus) else submission.status
         writer.writerow(
             {
                 "submission_id": str(submission.id),
                 "request_id": submission.request_id,
-                "status": submission.status.value,
+                "status": status_value,
                 "language": submission.language,
                 "score": review.score if review else None,
                 "summary": review.summary if review else None,
@@ -219,10 +239,11 @@ async def get_review(
         (Review.submission_id == submission_id) & (Review.user_id == str(current_user.id))
     )
 
+    status_value = submission.status.value if isinstance(submission.status, SubmissionStatus) else submission.status
     return jsonable_encoder(
         {
             "id": str(submission.id),
-            "status": submission.status.value,
+            "status": status_value,
             "submission": submission,
             "review": review,
         }

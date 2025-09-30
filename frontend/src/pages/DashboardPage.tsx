@@ -1,10 +1,21 @@
 import {
   Badge,
+  Button,
   Card,
   CardBody,
   CardHeader,
   Divider,
+  FormControl,
+  FormLabel,
   Heading,
+  HStack,
+  Input,
+  NumberDecrementStepper,
+  NumberIncrementStepper,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  Select,
   SimpleGrid,
   Stack,
   Stat,
@@ -12,8 +23,9 @@ import {
   StatLabel,
   StatNumber,
   Text,
+  useToast,
 } from '@chakra-ui/react';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useMemo, useState } from 'react';
 import {
   Line,
   LineChart,
@@ -29,17 +41,113 @@ import {
 const ReviewDiff = lazy(() =>
   import('@components/ReviewDiff').then((module) => ({ default: module.ReviewDiff }))
 );
-import { useListReviews, useReviewSummary } from '@features/reviews/api';
+import {
+  serializeReviewFilters,
+  type ReviewListFilters,
+  useListReviews,
+  useReviewSummary,
+} from '@features/reviews/api';
+import { apiClient, getApiErrorMessage } from '@services/api';
+
+const LANGUAGE_OPTIONS = [
+  { label: 'Python', value: 'python' },
+  { label: 'JavaScript', value: 'javascript' },
+  { label: 'TypeScript', value: 'typescript' },
+  { label: 'Go', value: 'go' },
+  { label: 'Java', value: 'java' },
+];
+
+const STATUS_OPTIONS = [
+  { label: 'Pending', value: 'pending' },
+  { label: 'Processing', value: 'processing' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Cached', value: 'cached' },
+  { label: 'Failed', value: 'failed' },
+];
 
 export const DashboardPage = () => {
-  const { data: reviewsData, isLoading: loadingReviews } = useListReviews();
+  const toast = useToast();
+  const [filters, setFilters] = useState<ReviewListFilters>({});
+  const [isExporting, setIsExporting] = useState(false);
+
+  const { data: reviewsData, isLoading: loadingReviews } = useListReviews(filters);
   const { data: summary, isLoading: loadingSummary } = useReviewSummary();
+
+  const filteredCount = reviewsData?.filteredTotal ?? reviewsData?.items.length ?? 0;
+  const totalCount = reviewsData?.total ?? filteredCount;
+
+  const handleFilterChange = <K extends keyof ReviewListFilters>(
+    key: K,
+    value: ReviewListFilters[K]
+  ) => {
+    setFilters((prev) => {
+      const next: ReviewListFilters = { ...prev };
+      const shouldRemove =
+        value === undefined ||
+        value === null ||
+        value === '' ||
+        (typeof value === 'number' && Number.isNaN(value));
+
+      if (shouldRemove) {
+        delete next[key];
+      } else {
+        next[key] = value;
+      }
+      return next;
+    });
+  };
+
+  const resetFilters = () => setFilters({});
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const params = serializeReviewFilters(filters);
+      const response = await apiClient.get('/reviews/export', {
+        params,
+        responseType: 'blob',
+      });
+      const blob = response.data as Blob;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dateStamp = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.setAttribute('download', `deepreview-export-${dateStamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast({ title: 'Export ready', status: 'success' });
+    } catch (error) {
+      toast({
+        title: 'Export failed',
+        description: getApiErrorMessage(error, 'Unable to generate the CSV right now.'),
+        status: 'error',
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <Stack spacing={8}>
       <AnalyticsHeader summaryLoading={loadingSummary} summary={summary} />
+      <ReviewFiltersPanel
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onReset={resetFilters}
+        onExport={handleExport}
+        exporting={isExporting}
+        loading={loadingReviews}
+        resultCount={filteredCount}
+        totalCount={totalCount}
+      />
       <AnalyticsCharts summaryLoading={loadingSummary} summary={summary} />
-      <RecentReviews loading={loadingReviews} reviews={reviewsData?.items ?? []} />
+      <RecentReviews
+        loading={loadingReviews}
+        reviews={reviewsData?.items ?? []}
+        summary={reviewsData?.summary}
+      />
     </Stack>
   );
 };
@@ -66,7 +174,7 @@ const AnalyticsHeader = ({ summaryLoading, summary }: AnalyticsHeaderProps) => (
       <CardBody>
         <Stat>
           <StatLabel>In queue</StatLabel>
-          <StatNumber>{summaryLoading ? '…' : summary?.pending ?? 0}</StatNumber>
+          <StatNumber>{summaryLoading ? '…' : (summary?.pending ?? 0)}</StatNumber>
           <StatHelpText>Submissions awaiting processing</StatHelpText>
         </Stat>
       </CardBody>
@@ -88,6 +196,130 @@ const AnalyticsHeader = ({ summaryLoading, summary }: AnalyticsHeaderProps) => (
     </Card>
   </SimpleGrid>
 );
+
+type ReviewFiltersPanelProps = {
+  filters: ReviewListFilters;
+  onFilterChange: <K extends keyof ReviewListFilters>(key: K, value: ReviewListFilters[K]) => void;
+  onReset: () => void;
+  onExport: () => Promise<void>;
+  exporting: boolean;
+  loading: boolean;
+  resultCount: number;
+  totalCount: number;
+};
+
+const ReviewFiltersPanel = ({
+  filters,
+  onFilterChange,
+  onReset,
+  onExport,
+  exporting,
+  loading,
+  resultCount,
+  totalCount,
+}: ReviewFiltersPanelProps) => {
+  const hasActiveFilters = useMemo(() => Object.keys(filters).length > 0, [filters]);
+
+  return (
+    <Card>
+      <CardBody>
+        <Stack spacing={4}>
+          <HStack
+            justify={{ base: 'flex-start', md: 'space-between' }}
+            align={{ base: 'flex-start', md: 'center' }}
+            flexWrap="wrap"
+            gap={4}
+          >
+            <Text fontSize="sm" color="gray.500">
+              {loading ? 'Loading reviews…' : `Showing ${resultCount} of ${totalCount} submissions`}
+            </Text>
+            <HStack spacing={3}>
+              <Button variant="ghost" onClick={onReset} isDisabled={!hasActiveFilters}>
+                Reset filters
+              </Button>
+              <Button
+                colorScheme="brand"
+                onClick={() => {
+                  void onExport();
+                }}
+                isLoading={exporting}
+              >
+                Export CSV
+              </Button>
+            </HStack>
+          </HStack>
+          <SimpleGrid columns={{ base: 1, md: 3, lg: 5 }} spacing={4}>
+            <FormControl>
+              <FormLabel fontSize="sm">Language</FormLabel>
+              <Select
+                value={filters.language ?? ''}
+                onChange={(event) => onFilterChange('language', event.target.value || undefined)}
+              >
+                <option value="">All languages</option>
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="sm">Status</FormLabel>
+              <Select
+                value={filters.status ?? ''}
+                onChange={(event) => onFilterChange('status', event.target.value || undefined)}
+              >
+                <option value="">Any status</option>
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="sm">Minimum score</FormLabel>
+              <NumberInput
+                value={filters.minScore ?? ''}
+                min={0}
+                max={10}
+                step={0.5}
+                precision={1}
+                onChange={(valueAsString, valueAsNumber) =>
+                  onFilterChange('minScore', valueAsString === '' ? undefined : valueAsNumber)
+                }
+              >
+                <NumberInputField placeholder="0-10" />
+                <NumberInputStepper>
+                  <NumberIncrementStepper />
+                  <NumberDecrementStepper />
+                </NumberInputStepper>
+              </NumberInput>
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="sm">From date</FormLabel>
+              <Input
+                type="date"
+                value={filters.fromDate ?? ''}
+                max={filters.toDate}
+                onChange={(event) => onFilterChange('fromDate', event.target.value || undefined)}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="sm">To date</FormLabel>
+              <Input
+                type="date"
+                value={filters.toDate ?? ''}
+                min={filters.fromDate}
+                onChange={(event) => onFilterChange('toDate', event.target.value || undefined)}
+              />
+            </FormControl>
+          </SimpleGrid>
+        </Stack>
+      </CardBody>
+    </Card>
+  );
+};
 
 type AnalyticsChartsProps = {
   summaryLoading: boolean;
@@ -140,15 +372,34 @@ const AnalyticsCharts = ({ summaryLoading, summary }: AnalyticsChartsProps) => {
 type RecentReviewsProps = {
   loading: boolean;
   reviews: NonNullable<ReturnType<typeof useListReviews>['data']>['items'];
+  summary?: NonNullable<ReturnType<typeof useListReviews>['data']>['summary'];
 };
 
-const RecentReviews = ({ loading, reviews }: RecentReviewsProps) => (
+const RecentReviews = ({ loading, reviews, summary }: RecentReviewsProps) => (
   <Card>
     <CardHeader>
       <Heading size="md">Recent reviews</Heading>
       <Text fontSize="sm" color="gray.500">
         See the latest submissions and compare them with the suggested AI improvements.
       </Text>
+      {summary && (
+        <HStack spacing={3} mt={3} flexWrap="wrap">
+          <Badge colorScheme="green" variant="subtle">
+            Completed {summary.completed}
+          </Badge>
+          <Badge colorScheme="yellow" variant="subtle">
+            Pending {summary.pending}
+          </Badge>
+          <Badge colorScheme="red" variant="subtle">
+            Failed {summary.failed}
+          </Badge>
+          {summary.avgScore != null && (
+            <Badge colorScheme="purple" variant="subtle">
+              Avg score {summary.avgScore.toFixed(2)}
+            </Badge>
+          )}
+        </HStack>
+      )}
     </CardHeader>
     <CardBody>
       {loading && <Text>Loading reviews…</Text>}

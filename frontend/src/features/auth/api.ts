@@ -19,7 +19,7 @@ type RegisterPayload = { email: string; password: string; full_name?: string };
 type LoginPayload = { email: string; password: string };
 
 export const useRegister = () =>
-  useMutation<TokenResponse, Error, RegisterPayload>({
+  useMutation<TokenResponse, unknown, RegisterPayload>({
     mutationFn: async (payload: RegisterPayload) => {
       const { data } = await apiClient.post<TokenResponse>('/auth/register', payload);
       return data;
@@ -35,7 +35,7 @@ export const useRegister = () =>
   });
 
 export const useLogin = () =>
-  useMutation<TokenResponse, Error, LoginPayload>({
+  useMutation<TokenResponse, unknown, LoginPayload>({
     mutationFn: async (payload: LoginPayload) => {
       const body = new URLSearchParams({
         username: payload.email,
