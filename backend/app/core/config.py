@@ -4,6 +4,7 @@ from typing import Literal
 
 from pydantic import AnyHttpUrl, EmailStr, Field
 from pydantic_settings import BaseSettings
+from pydantic import model_validator
 
 
 class Settings(BaseSettings):
@@ -41,6 +42,9 @@ class Settings(BaseSettings):
     review_cache_prefix: str = Field("deepreview:review-cache", alias="REVIEW_CACHE_PREFIX")
     websocket_channel_prefix: str = Field("deepreview:ws", alias="WEBSOCKET_CHANNEL_PREFIX")
 
+    # Optional Upstash REST access (read-only cache fallback)
+    upstash_redis_rest_token: str | None = Field(None, alias="UPSTASH_REDIS_REST_TOKEN")
+
     sentry_dsn: str | None = Field(None, alias="SENTRY_DSN")
     growthbook_api_host: AnyHttpUrl = Field(
         "https://api.growthbook.io", alias="GROWTHBOOK_API_HOST"
@@ -51,6 +55,20 @@ class Settings(BaseSettings):
     demo_user_email: EmailStr = Field("demo@deepreview.dev", alias="DEMO_USER_EMAIL")
     demo_user_password: str = Field("DeepReview!123", alias="DEMO_USER_PASSWORD")
     demo_user_full_name: str = Field("DeepReview Demo", alias="DEMO_USER_FULL_NAME")
+
+    @model_validator(mode="after")
+    def _validate_redis_url(self) -> "Settings":
+        """Ensure REDIS_URL points to a Redis protocol endpoint, not the Upstash REST HTTP URL.
+
+        Rationale: Celery, pub/sub websockets and redis.asyncio client require the Redis wire protocol.
+        The Upstash dashboard exposes both a *Public Endpoint* (rediss://...) and a *REST URL* (https://...).
+        The REST form will break background jobs and websocket notifications.
+        """
+        if self.redis_url.startswith("http://") or self.redis_url.startswith("https://"):
+            raise ValueError(
+                "Invalid REDIS_URL: HTTP/HTTPS detected. Use the Upstash rediss:// connection string (e.g. rediss://:password@hostname:port)."
+            )
+        return self
 
     class Config:
         env_file = ".env"
