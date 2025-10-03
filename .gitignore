@@ -19,7 +19,6 @@ dist/
 .vite/
 coverage-final.json
 pnpm-debug.log
-pnpm-lock.yaml
 
 # Python
 .poetry.lock

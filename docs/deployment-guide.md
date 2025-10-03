@@ -9,6 +9,9 @@ This walkthrough explains how to promote DeepReview to production using the reco
 2. Launch a free M0 cluster in the region closest to your users.
 3. Add a database user (`deepreview-app`) with a strong password and `Read/Write` access to the `deepreview` database.
 4. Add your Vercel/Render IPs (or `0.0.0.0/0` during testing) to the network access list.
+   - In Render, look under **Settings → General → Region** to note where your service runs (e.g. "Oregon – US West").
+   - Match the region to the [Render static outbound IP list](https://render.com/docs/static-outbound-ip-addresses) and add every IP (or CIDR block) shown for that region to Atlas. MongoDB treats each entry as a single address, so paste the full CIDR value such as `208.52.170.192/27`.
+   - Atlas changes can take a couple of minutes to propagate—wait for the green "Active" badge before redeploying.
 5. Copy the SRV connection string and replace the placeholder credentials; this becomes `MONGODB_URI`.
 
 ### Upstash Redis
