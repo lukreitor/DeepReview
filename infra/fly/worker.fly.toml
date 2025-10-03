@@ -1,0 +1,33 @@
+# Fly.io deployment config for the DeepReview Celery worker.
+#
+# Usage:
+#   1. Choose a globally unique app name and replace `deepreview-worker` below.
+#   2. Update `primary_region` to the Fly region closest to your Redis/Mongo instances.
+#   3. Deploy with: fly deploy --config infra/fly/worker.fly.toml --app <your-app-name>
+#
+# Secrets such as `MONGODB_URI` and `REDIS_URL` are injected via `fly secrets set`.
+
+app = "deepreview-worker"
+primary_region = "iad" # Washington, D.C. (adjust as needed)
+kill_signal = "SIGINT"
+kill_timeout = 5
+
+[build]
+  dockerfile = "infra/docker/worker.Dockerfile"
+  context = "."
+
+[processes]
+  worker = "poetry run celery -A app.workers.worker worker --loglevel=info"
+
+[env]
+  ENVIRONMENT = "production"
+  BACKEND_URL = "https://deepreview.onrender.com"
+  FRONTEND_URL = "https://deep-review.vercel.app"
+  CELERY_DEFAULT_QUEUE = "reviews"
+  CELERY_TASK_ALWAYS_EAGER = "false"
+  CELERY_TASK_EAGER_PROPAGATES = "true"
+  MONGODB_DB = "deepreview"
+  RATE_LIMIT = "10/hour"
+  REVIEW_CACHE_TTL_SECONDS = "86400"
+  REVIEW_CACHE_PREFIX = "deepreview:review-cache"
+  WEBSOCKET_CHANNEL_PREFIX = "deepreview:ws"
