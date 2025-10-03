@@ -15,11 +15,11 @@ RUN curl -sSL https://install.python-poetry.org | python - "--version" "$POETRY_
 
 WORKDIR /app
 
-COPY backend/pyproject.toml ./pyproject.toml
+COPY pyproject.toml ./pyproject.toml
 
 RUN poetry config virtualenvs.create false \
     && poetry install --no-root --no-interaction --no-ansi
 
-COPY backend/app ./app
+COPY app ./app
 
 CMD ["poetry", "run", "celery", "-A", "app.workers.worker", "worker", "--loglevel", "info"]
