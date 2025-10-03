@@ -184,7 +184,7 @@ export const useReviewStream = () => {
   const upsertJob = useReviewStore((state: ReviewState) => state.upsert);
   const removeJob = useReviewStore((state: ReviewState) => state.remove);
   const queryClient = useQueryClient();
-  const completedJobTtl = 20000;
+  const completedJobTtl = 60000;
 
   useEffect(() => {
     if (!token) {
@@ -198,11 +198,21 @@ export const useReviewStream = () => {
           status: event.status,
           cached: Boolean(event.cached),
           score: typeof event.score === 'number' ? event.score : undefined,
+          summary: typeof event.summary === 'string' ? event.summary : undefined,
+          provider: typeof event.provider === 'string' ? event.provider : undefined,
+          completedAt: ['completed', 'cached', 'failed'].includes(event.status)
+            ? new Date().toISOString()
+            : undefined,
         });
         void queryClient.invalidateQueries({ queryKey: ['reviews'] });
         void queryClient.invalidateQueries({ queryKey: ['review-summary'] });
         if (['completed', 'failed', 'cached'].includes(event.status)) {
-          void hydrateJobDetails(submissionId, Boolean(event.cached), event.status, upsertJob);
+          void hydrateJobDetailsWithRetry(
+            submissionId,
+            Boolean(event.cached),
+            event.status,
+            upsertJob
+          );
           window.setTimeout(() => {
             removeJob(submissionId);
           }, completedJobTtl);
@@ -222,50 +232,74 @@ const hydrateJobDetails = async (
   status: string,
   upsertJob: (job: ReviewJob) => void
 ) => {
-  try {
-    const { data } = await apiClient.get<{
-      submission: {
-        id: string;
-        language: string;
-        status: string;
-        source?: string;
-        request_id?: string;
-        created_at: string;
-        updated_at: string;
-        metadata?: Record<string, unknown>;
-        transcript_text?: string | null;
-      };
-      review?: {
-        id?: string;
-        score?: number | null;
-        summary?: string | null;
-        issues?: ReviewIssue[];
-        improved_code?: string | null;
-        created_at?: string;
-        provider?: string;
-        security_concerns?: string[];
-        performance_recommendations?: string[];
-        additional_suggestions?: string[];
-      } | null;
-    }>(`/reviews/${submissionId}`);
+  const { data } = await apiClient.get<{
+    submission: {
+      id: string;
+      language: string;
+      status: string;
+      source?: string;
+      request_id?: string;
+      created_at: string;
+      updated_at: string;
+      metadata?: Record<string, unknown>;
+      transcript_text?: string | null;
+      transcript_confidence?: number | null;
+    };
+    review?: {
+      id?: string;
+      score?: number | null;
+      summary?: string | null;
+      issues?: ReviewIssue[];
+      improved_code?: string | null;
+      created_at?: string;
+      provider?: string;
+      security_concerns?: string[];
+      performance_recommendations?: string[];
+      additional_suggestions?: string[];
+    } | null;
+  }>(`/reviews/${submissionId}`);
 
-    upsertJob({
-      id: submissionId,
-      status: status || data.submission.status,
-      cached,
-      score: data.review?.score ?? undefined,
-      language: data.submission.language,
-      source: data.submission.source,
-      summary: data.review?.summary ?? null,
-      issues: data.review?.issues ?? [],
-      improvedCode: data.review?.improved_code ?? null,
-      submittedAt: data.submission.created_at,
-      completedAt: data.review?.created_at,
-      requestId: data.submission.request_id,
-      metadata: data.submission.metadata,
-      transcriptText: data.submission.transcript_text,
-    });
-  } catch (error) {
-    console.error('Failed to hydrate review job details', error);
+  upsertJob({
+    id: submissionId,
+    status: status || data.submission.status,
+    cached,
+    score: data.review?.score ?? undefined,
+    language: data.submission.language,
+    source: data.submission.source,
+    summary: data.review?.summary ?? null,
+    issues: data.review?.issues ?? [],
+    improvedCode: data.review?.improved_code ?? null,
+    submittedAt: data.submission.created_at,
+    completedAt: data.review?.created_at ?? data.submission.updated_at,
+    requestId: data.submission.request_id,
+    metadata: data.submission.metadata,
+    transcriptText: data.submission.transcript_text,
+    transcriptConfidence: data.submission.transcript_confidence ?? null,
+    provider: data.review?.provider,
+    securityConcerns: data.review?.security_concerns ?? [],
+    performanceRecommendations: data.review?.performance_recommendations ?? [],
+    additionalSuggestions: data.review?.additional_suggestions ?? [],
+  });
+};
+
+const hydrateJobDetailsWithRetry = async (
+  submissionId: string,
+  cached: boolean,
+  status: string,
+  upsertJob: (job: ReviewJob) => void
+) => {
+  const delays = [0, 400, 1200];
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (delays[attempt] > 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, delays[attempt]));
+    }
+    try {
+      await hydrateJobDetails(submissionId, cached, status, upsertJob);
+      return;
+    } catch (error) {
+      if (attempt === delays.length - 1) {
+        console.error('Failed to hydrate review job details after retries', error);
+      }
+    }
   }
 };

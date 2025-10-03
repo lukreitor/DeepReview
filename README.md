@@ -17,7 +17,7 @@ infra/      Dockerfiles, GitHub Actions workflows, IaC experiments
 
 - **Multimodal submissions:** Developers can send code or voice notes from the Submit page; Monaco powers syntax highlighting while Whisper transcription normalizes audio.
 - **AI-assisted reviews:** Celery workers call DeepSeek with resilient retries, producing structured scores, issues, and improved code stored in MongoDB.
-- **Real-time feedback:** Redis-backed WebSockets stream queue updates into the Review Queue component so users watch statuses change without refreshes.
+- **Real-time feedback:** Redis-backed WebSockets stream queue updates into the Review Queue component so users watch statuses change without refreshes, now enriched with AI summaries, issues, transcripts, and actionable recommendations inline.
 - **Analytics dashboard:** Recharts visualizes throughput and issue trends, filters refine history, and exports produce CSV snapshots for audits.
 - **Operational guardrails:** SlowAPI enforces per-IP rate limits, Redis caches duplicate reviews, and health endpoints check every dependency.
 
@@ -62,6 +62,26 @@ pnpm dev
 ```
 
 Visit `http://localhost:3000` for the frontend and `http://localhost:8000/docs` for the FastAPI docs.
+
+## Requirement Checklist
+
+### Core features
+
+- [x] **Code submission interface** – `SubmitPage.tsx` offers language-aware Monaco editing, audio uploads, validation, and clear error states.
+- [x] **AI review service** – Celery workers (`app/tasks/review.py`) call `AIReviewService` (DeepSeek/Whisper) and persist structured feedback in MongoDB.
+- [x] **Review management** – Beanie models track submission status transitions, SlowAPI enforces per-IP quotas, and Celery handles background processing.
+- [x] **Analytics dashboard** – `DashboardPage.tsx` provides filters, paginated history, throughput/issue charts with empty states, and CSV export respecting current filters.
+
+### Bonus features
+
+- [x] **WebSocket status updates** – `/ws/reviews` pushes live events consumed via `useReviewStream` for the live queue.
+- [x] **Code diff visualisation** – `ReviewDiff` component renders AI-improved snippets side-by-side.
+- [x] **User authentication & history** – JWT-based FastAPI auth with Zustand-backed session handling surfaces per-user review history.
+- [x] **Caching for duplicate submissions** – Redis `ReviewCache` deduplicates repeated code hashes and serves cached reviews instantly.
+- [x] **Docker containerisation** – `docker-compose.yml` plus service-specific Dockerfiles enable local and CI builds.
+- [x] **Automated tests** – `poetry run pytest` covers backend services; Vitest and React Testing Library support frontend specs (see `frontend/tests/`).
+
+Progress beyond the checklist includes a rich Review Queue summarising AI output (security, performance, transcript confidence) and retry-aware hydration so completed jobs always display full detail before dismissal.
 
 ### Testing
 
